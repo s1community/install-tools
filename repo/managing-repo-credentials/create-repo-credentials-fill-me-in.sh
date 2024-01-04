@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# This script can be used to generate SentinelOne Repository authentication token/credenetials for 
-# accessing SentinelOne's public/authenticated container registry (and rpm/deb repos).
+# This script can be used to generate SentinelOne Repository authentication token/credentials for 
+# accessing SentinelOne's public/authenticated container registry and rpm/deb package repos.
 # Please see the associated Knowledge Base article here:
 # https://community.sentinelone.com/s/article/000008771
 #
