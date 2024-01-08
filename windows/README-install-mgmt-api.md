@@ -9,7 +9,8 @@ Note: The concept of this script could easily be modified for usage within confi
 For more information, please refer to [Installing the Windows Agent](https://community.sentinelone.com/s/article/000005515)
 
 # Prerequisites
-You must have `curl` installed on your target Linux host
+
+n/a
 
 # Manual Usage
 1. Download the 's1-agent-install-mgmt-api.ps1' script
