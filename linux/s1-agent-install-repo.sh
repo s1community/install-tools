@@ -175,22 +175,39 @@ function install_using_apt () {
     # remove any existing source lists for sentinelone
     rm -f /etc/apt/sources.list.d/sentinelone-registry-ga.list
     rm -f /etc/apt/sources.list.d/sentinelone-registry-ea.list
-    # add the GA repository to the list of sources
-    cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ga.list
+
+    if (cat /etc/os-release | grep -E "VERSION_CODENAME=(bionic|buster)" &> /dev/null ); then
+        printf "\n${Yellow}INFO:  Detected Bionic Beaver or Buster.  Using older GPG/Auth methods...${Color_Off} \n\n" 
+        # add public signature verification key for the repository to ensure the integrity and authenticity of packages
+        curl -s https://us-apt.pkg.dev/doc/repo-signing-key.gpg | apt-key add - && curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+        # add the GA repository to the list of sources
+        cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ga.list
+deb [trusted=yes] https://${S1_REPOSITORY_USERNAME}:${S1_REPOSITORY_PASSWORD}@${S1_REPOSITORY_URL} apt-ga main
+EOF
+        if ( echo $INCLUDE_EARLY_ACCESS_REPO | grep -E "([Tt]rue|[Yy]es|[Yy])" &> /dev/null ); then
+            # add the EA repository to the list of sources (if INCLUDE_EARLY_ACCESS_REPO is set to true)
+            cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ea.list
+deb [trusted=yes] https://${S1_REPOSITORY_USERNAME}:${S1_REPOSITORY_PASSWORD}@${S1_REPOSITORY_URL} apt-ea main
+EOF
+        fi
+    else
+        # add the GA repository to the list of sources
+        cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ga.list
 deb [trusted=yes] https://${S1_REPOSITORY_URL} apt-ga main
 EOF
-    if ( echo $INCLUDE_EARLY_ACCESS_REPO | grep -E "([Tt]rue|[Yy]es|[Yy])" &> /dev/null ); then
-        # add the EA repository to the list of sources (if INCLUDE_EARLY_ACCESS_REPO is set to true)
-        cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ea.list
+        if ( echo $INCLUDE_EARLY_ACCESS_REPO | grep -E "([Tt]rue|[Yy]es|[Yy])" &> /dev/null ); then
+            # add the EA repository to the list of sources (if INCLUDE_EARLY_ACCESS_REPO is set to true)
+            cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ea.list
 deb [trusted=yes] https://${S1_REPOSITORY_URL} apt-ea main
 EOF
-    fi
-    # add repo credentials to /etc/apt/auth.conf for the SentinelOne repo
-    cat <<- EOF >> /etc/apt/auth.conf
-machine https://${S1_REPOSITORY_URL}
-login ${S1_REPOSITORY_USERNAME}
-password ${S1_REPOSITORY_PASSWORD}
+        fi
+        # add repo credentials to /etc/apt/auth.conf for the SentinelOne repo
+        cat <<- EOF >> /etc/apt/auth.conf
+    machine https://${S1_REPOSITORY_URL}
+    login ${S1_REPOSITORY_USERNAME}
+    password ${S1_REPOSITORY_PASSWORD}
 EOF
+    fi
     apt update
     apt install -y sentinelagent=${S1_AGENT_VERSION}
 }
