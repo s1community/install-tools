@@ -170,7 +170,9 @@ function install_using_apt () {
     printf "\n${Yellow}INFO:  Installing with apt...${Color_Off} \n\n" 
     S1_REPOSITORY_URL="deb.sentinelone.net"
     # add public signature verification key for the repository to ensure the integrity and authenticity of packages
-    curl -s https://us-apt.pkg.dev/doc/repo-signing-key.gpg | apt-key add - && curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - 
+    #curl -s https://us-apt.pkg.dev/doc/repo-signing-key.gpg | apt-key add - && curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - 
+    curl -sLO https://us-apt.pkg.dev/doc/repo-signing-key.gpg | sudo tee /etc/apt/trusted.gpg.d/sentinelone-repo-signing-key.gpg
+    curl -sLO https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo tee /etc/apt/trusted.gpg.d/sentinelone-apt-key.gpg
     rm -f /etc/apt/sources.list.d/sentinelone-registry-ga.list
     rm -f /etc/apt/sources.list.d/sentinelone-registry-ea.list
     # add the GA repository to the list of sources
