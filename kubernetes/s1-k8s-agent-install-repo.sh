@@ -81,7 +81,7 @@ fi
 
 if [ -z $S1_AGENT_TAG ];then
     echo ""
-    read -p "Please enter the SentinelOne Agent Version to install (ie: 23.4.1-ea): " S1_AGENT_VERSION
+    read -p "Please enter the SentinelOne Agent Version to install (ie: 23.4.1-ea): " S1_AGENT_TAG
 fi
 
 # If K8S_TYPE is set to openshift or fargate, we set special variables that are used to dynamically add helm flags during install
@@ -102,6 +102,7 @@ case $K8S_TYPE in
 esac
 
 # We derive the helm release/chart version from the SentinelOne Agent version/tag + set the s1helper tag to be the same as the s1agent tag.
+# This requires removing the [-ea|-ga] designator from the S1_AGENT_TAG
 HELM_RELEASE_VERSION=$(echo $S1_AGENT_TAG | cut -d "-" -f1) # ie: 23.4.1
 S1_HELPER_TAG=$S1_AGENT_TAG
 
