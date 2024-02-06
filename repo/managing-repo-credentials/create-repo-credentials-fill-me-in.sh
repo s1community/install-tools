@@ -35,7 +35,7 @@ function jq_check () {
 
 function check_api_response () {
     if [[ $(echo $RESPONSE | jq 'has("errors")') == 'true' ]]; then
-        printf "\n${Red}ERROR: \n $(echo $Response | jq -r ".errors"). ${Color_Off}\n"
+        printf "\n${Red}ERROR: \n $(echo $RESPONSE | jq -r '.errors[]'). ${Color_Off}\n"
         echo ""
         exit 1
     fi
