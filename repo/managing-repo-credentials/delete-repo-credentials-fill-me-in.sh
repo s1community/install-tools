@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This script can be used to delete SentinelOne Repository authentication token/credenetials used 
+# This script can be used to delete SentinelOne Repository authentication token/credentials used 
 # to access the public/authenticated container registry (and rpm/deb repos).
 #
 
@@ -21,6 +21,12 @@ Blue='\033[0;34m'         # Blue
 Purple='\033[0;35m'       # Purple
 Cyan='\033[0;36m'         # Cyan
 White='\033[0;37m'        # White
+
+if [ -z ${1} ] || [ 1 -gt ${1} ]; then
+    printf "\n${Red}ERROR:  Please enter a positive integer for TOKEN_ID.${Color_Off}\n"
+    printf "\nUsage: ./$(basename "$0") TOKEN_ID${Color_Off}\n"
+    exit 1
+fi
 
 function jq_check () {
     if ! [[ -x "$(which jq)" ]]; then
@@ -68,3 +74,4 @@ RESPONSE=$(curl -s -X DELETE --header "Content-Type: application/json" \
 check_api_response
 
 printf "\n${Green}Finished! ${Color_Off}\n"
+exit 0
