@@ -98,3 +98,4 @@ printf "\n${Yellow}Creating JSON File... ${Color_Off}\n"
 echo $RESPONSE > $REPO_INFO_FILE
 
 printf "\n${Green}Finished! ${Color_Off}\n"
+exit 0

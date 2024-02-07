@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This script can be used to list SentinelOne Repository authentication token/credenetials 
+# This script can be used to list SentinelOne Repository authentication token/credentials 
 #
 
 # Customize these variables to from information from your SentinelOne Console
@@ -98,3 +98,4 @@ printf "\n${Yellow}Creating JSON File... ${Color_Off}\n"
 echo $RESPONSE > $REPO_INFO_FILE
 
 printf "\n${Green}Finished! ${Color_Off}\n"
+exit 0
