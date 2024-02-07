@@ -188,7 +188,7 @@ if ! echo $S1_SITE_TOKEN | base64 -d | grep sentinelone.net &> /dev/null ; then
 fi
 
 # Check if the value of S1_REPOSITORY_USERNAME is in the right format
-if ! echo $S1_REPOSITORY_USERNAME | base64 -d | grep -E '^\d+\:(aws|gcp)\:[a-zA-Z0-9-]+\:\d{18,19}$' &> /dev/null ; then
+if ! echo $S1_REPOSITORY_USERNAME | base64 -d | grep -E '^\d+\:(aws|gcp)\:[a-zA-Z0-9-]+\:[a-zA-Z0-9-]+$' &> /dev/null ; then
     printf "\n${Red}ERROR:  That value passed for S1_REPOSITORY_USERNAME does not decode correctly.  Please ensure that you've passed a valid Registry Username as the second argument to the script. \n${Color_Off}"
     printf "\nFor instructions on obtaining ${Purple}Registry Credentials${Color_Off} from the SentinelOne management console, please see the following KB article:\n"
     printf "    ${Blue}https://community.sentinelone.com/s/article/000008771 ${Color_Off} \n\n"
