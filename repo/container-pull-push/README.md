@@ -27,7 +27,7 @@ https://community.sentinelone.com/s/article/000008771
 ```
 cp s1.config.example s1.config
 
-[update all values to reflect your private registry configuration]
+[update all values in s1.config to reflect your private registry configuration]
 ```
 
 ### Usage
