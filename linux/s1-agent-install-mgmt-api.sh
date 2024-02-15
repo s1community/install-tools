@@ -56,10 +56,10 @@ function check_args () {
         exit 1
     fi
 
-    # Check if the API_KEY is in the right format
-    if ! [[ ${#API_KEY} -eq 80 ]]; then
-        printf "\n${Red}ERROR:  Invalid format for API_KEY: $API_KEY ${Color_Off}\n"
-        echo "API Keys are generally 80 characters long and are alphanumeric."
+    # Check if the API_TOKEN is in the right format
+    if  [[ ${#API_TOKEN} -le 79 ]] ; then
+        printf "\n${Red}ERROR:  Invalid format for API_TOKEN: $API_TOKEN ${Color_Off}\n"
+        echo "API Keys are generally 80 to 430 characters long and are alphanumeric."
         echo ""
         exit 1
     fi
