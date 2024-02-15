@@ -49,10 +49,10 @@ if ! [[ $S1_ACCOUNT_ID =~ ^[0-9]{18,19}$ ]]; then
     exit 1
 fi
 
-# Check if the API_KEY is in the right format
-if ! [[ ${#S1_API_TOKEN} -eq 80 ]]; then
-    printf "\n${Red}ERROR:  Invalid format for S1_API_TOKEN: $S1_API_TOKEN ${Color_Off}\n"
-    echo "API Tokens are generally 80 characters long and are alphanumeric."
+# Check if the API_TOKEN is in the right format
+if  [[ ${#API_TOKEN} -le 79 ]] ; then
+    printf "\n${Red}ERROR:  Invalid format for API_TOKEN: $API_TOKEN ${Color_Off}\n"
+    echo "API Keys are generally 80 to 430 characters long and are alphanumeric."
     echo ""
     exit 1
 fi
