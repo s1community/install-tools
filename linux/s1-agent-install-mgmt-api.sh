@@ -2,9 +2,9 @@
 ##############################################################################################################
 # Description:  Bash script to aid with automating SentinelOne Linux Agent installation via API
 # 
-# Usage:    sudo ./s1-agent-install-mgmt-api.sh S1_CONSOLE_PREFIX API_KEY SITE_TOKEN VERSION_STATUS
+# Usage:    sudo ./s1-agent-install-mgmt-api.sh S1_CONSOLE_PREFIX API_TOKEN SITE_TOKEN VERSION_STATUS
 # 
-# Version:  1.0
+# Version:  1.1
 ##############################################################################################################
 
 # NOTE:  This version will install the latest EA or GA version of the SentinelOne Linux Agent
@@ -13,7 +13,7 @@
 
 S1_MGMT_URL="https://$1.sentinelone.net"    #ie:  usea1-purple
 API_ENDPOINT='/web/api/v2.1/update/agent/packages'
-API_KEY=$2
+API_TOKEN=$2
 SITE_TOKEN=$3
 VERSION_STATUS=$4   # "EA" or "GA"
 CURL_OPTIONS='--silent --tlsv1.2'
@@ -33,7 +33,7 @@ Yellow='\033[0;33m'       # Yellow
 # Check if correct # of arguments are passed.
 if [ "$#" -ne 4 ]; then
     printf "\n${Red}ERROR:  Incorrect number of arguments were passed.${Color_Off}\n"
-    echo "Usage: $0 S1_CONSOLE_PREFIX API_KEY SITE_TOKEN VERSION_STATUS" >&2
+    echo "Usage: $0 S1_CONSOLE_PREFIX API_TOKEN SITE_TOKEN VERSION_STATUS" >&2
     echo ""
     exit 1
 fi
@@ -189,11 +189,11 @@ check_args
 detect_pkg_mgr_info
 curl_check $PACKAGE_MANAGER
 jq_check $PACKAGE_MANAGER
-sudo curl -sH "Accept: application/json" -H "Authorization: ApiToken $API_KEY" "$S1_MGMT_URL$API_ENDPOINT?sortOrder=desc&fileExtension=$FILE_EXTENSION&limit=20&sortBy=version&status=$VERSION_STATUS&platformTypes=linux" > response.txt
+sudo curl -sH "Accept: application/json" -H "Authorization: ApiToken $API_TOKEN" "$S1_MGMT_URL$API_ENDPOINT?sortOrder=desc&fileExtension=$FILE_EXTENSION&limit=20&sortBy=version&status=$VERSION_STATUS&platformTypes=linux" > response.txt
 check_api_response
 find_agent_info_by_architecture
 printf "\n${Yellow}INFO:  Downloading $AGENT_FILE_NAME ${Color_Off}\n"
-sudo curl -sH "Authorization: ApiToken $API_KEY" $AGENT_DOWNLOAD_LINK -o /tmp/$AGENT_FILE_NAME
+sudo curl -sH "Authorization: ApiToken $API_TOKEN" $AGENT_DOWNLOAD_LINK -o /tmp/$AGENT_FILE_NAME
 printf "\n${Yellow}INFO:  Installing S1 Agent: $(echo "sudo $AGENT_INSTALL_SYNTAX /tmp/$AGENT_FILE_NAME") ${Color_Off}\n"
 sudo $AGENT_INSTALL_SYNTAX /tmp/$AGENT_FILE_NAME
 printf "\n${Yellow}INFO:  Setting Site Token... ${Color_Off}\n"
