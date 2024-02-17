@@ -122,7 +122,7 @@ fi
 ################################################################################
 
 # Check if the value of S1_REPOSITORY_USERNAME is in the right format
-if ! echo $S1_REPOSITORY_USERNAME | base64 -d | grep -E '^\d+\:(aws|gcp)\:[a-zA-Z0-9-]+\:[a-zA-Z0-9-]+$' &> /dev/null ; then
+if ! echo $S1_REPOSITORY_USERNAME | base64 -d | grep -E '^[[:digit:]]+\:(aws|gcp)\:[a-zA-Z0-9-]+\:[a-zA-Z0-9-]+$' &> /dev/null ; then
     printf "\n${Red}ERROR:  That value passed for S1_REPOSITORY_USERNAME does not decode correctly.  Please ensure that you've passed a valid Registry Username as the second argument to the script. \n${Color_Off}"
     printf "\nFor instructions on obtaining ${Purple}Registry Credentials${Color_Off} from the SentinelOne management console, please see the following KB article:\n"
     printf "    ${Blue}https://community.sentinelone.com/s/article/000008771 ${Color_Off} \n\n"
@@ -138,7 +138,7 @@ if ! [ ${#S1_REPOSITORY_PASSWORD} -gt 160 ]; then
 fi
 
 # Check if the value of S1_AGENT_TAG is in the right format
-if ! echo $S1_AGENT_TAG | grep -e '^\d\d\.\d\.\d-[ge]a$' &> /dev/null ; then
+if ! echo $S1_AGENT_TAG | grep -E '^[[:digit:]][[:digit:]]\.[[:digit:]]\.[[:digit:]]-[ge]a$' &> /dev/null ; then
     printf "\n${Red}ERROR:  The value passed for S1_AGENT_TAG is not in the correct format.  Examples of valid values are:  23.3.2-ga and 23.4.1-ea \n\n${Color_Off}"
     exit 1
 fi
