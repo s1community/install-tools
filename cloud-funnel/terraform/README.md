@@ -43,4 +43,4 @@ terraform destroy
 
 * `sentinelone_create_splunk_iam` can be set to `1` to auto-create IAM resources that enable Splunk ingest using the [Splunk Add-on for AWS](https://splunkbase.splunk.com/app/1876).  
 
-See [Splunk README][./README_SPLUNK.md]
+See [Splunk README](./README_SPLUNK.md)
