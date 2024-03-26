@@ -183,3 +183,4 @@ resource "aws_sqs_queue" "cloudfunnel_dlq" {
     sqs_managed_sse_enabled     = true
     message_retention_seconds   = 14400
 }
+
