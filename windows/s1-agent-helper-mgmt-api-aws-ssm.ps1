@@ -16,8 +16,8 @@
  $agent_package_major_version = ""
  
  # Basic sanity checks for input parameters
- if (-Not ($api_key.Length -eq 80)) {
-     Write-Output "API Keys are generally 80 characters long and are alphanumeric."
+ if (-Not ($api_key.Length -gt 79)) {
+     Write-Output "API Keys are generally 80 to 430 characters long and are alphanumeric."
      exit 1
  }
  
