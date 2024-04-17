@@ -9,7 +9,7 @@ phases:
         action: ExecuteBash
         inputs:
           commands:
-            - curl -sLO https://raw.githubusercontent.com/s1-howie/s1-agents-helper/main/s1-agent-helper-ec2-image-builder.sh
+            - curl -sLO https://raw.githubusercontent.com/s1community/install-tools/main/aws/ec2-image-builder/s1-agent-helper-ec2-image-builder.sh
             - chmod +x s1-agent-helper-ec2-image-builder.sh
             - ./s1-agent-helper-ec2-image-builder.sh
 
