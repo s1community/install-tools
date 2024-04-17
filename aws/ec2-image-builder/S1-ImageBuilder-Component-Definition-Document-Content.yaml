@@ -1,0 +1,30 @@
+name: InstallSentinelOneLinuxDocument
+description: This document is used to install the latest EA/GA version of the SentinelOne Linux Agent.
+schemaVersion: 1.0
+
+phases:
+  - name: build
+    steps:
+      - name: InstallSentinelOneLinuxAgent
+        action: ExecuteBash
+        inputs:
+          commands:
+            - curl -sLO https://raw.githubusercontent.com/s1-howie/s1-agents-helper/main/s1-agent-helper-ec2-image-builder.sh
+            - chmod +x s1-agent-helper-ec2-image-builder.sh
+            - ./s1-agent-helper-ec2-image-builder.sh
+
+  - name: validate
+    steps:
+      - name: CheckSentinelctlUtilityExists
+        action: ExecuteBash
+        inputs:
+          commands:
+            - which sentinelctl
+
+  - name: test
+    steps:
+      - name: CheckSentinelctlStatus
+        action: ExecuteBash
+        inputs:
+          commands:
+            - sentinelctl management status
