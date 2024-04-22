@@ -4,7 +4,7 @@
 #
 # Pre-requisites: Build instances must have IAM permissions (ie: AmazonSSMManagedInstanceCore + EC2InstanceProfileForImageBuilder)
 # 
-# Version:  2024.04.17
+# Version:  2024.04.22
 ##################################################################################################################################
 
 
@@ -33,17 +33,11 @@ AGENT_FILE_NAME=''
 AGENT_DOWNLOAD_LINK=''
 VERSION_COMPARE_RESULT=''
 
-Color_Off='\033[0m'       # Text Resets
-# Regular Colors
-Red='\033[0;31m'          # Red
-Green='\033[0;32m'        # Green
-Yellow='\033[0;33m'       # Yellow
-
 
 # Check if running as root
 function check_root () {
     if [[ $(/usr/bin/id -u) -ne 0 ]]; then
-        printf "\n${Red}ERROR:  This script must be run as root.  Please retry with 'sudo'.${Color_Off}\n"
+        printf "\nERROR:  This script must be run as root.  Please retry with 'sudo'.\n"
         exit 1;
     fi
 }
@@ -59,7 +53,7 @@ function get_parameter_store_values () {
 function check_args () {
     # Check if the SITE_TOKEN is in the right format
     if ! [[ ${#SITE_TOKEN} -gt 90 ]]; then
-        printf "\n${Red}ERROR:  Invalid format for SITE_TOKEN: $SITE_TOKEN ${Color_Off}\n"
+        printf "\nERROR:  Invalid format for SITE_TOKEN: $SITE_TOKEN \n"
         echo "Site Tokens are generally more than 90 characters long and are ASCII encoded."
         echo ""
         exit 1
@@ -67,7 +61,7 @@ function check_args () {
 
     # Check if the API_KEY is in the right format
     if [[ ${#API_KEY} -lt 80 ]]; then
-        printf "\n${Red}ERROR:  Invalid format for API_KEY: $API_KEY ${Color_Off}\n"
+        printf "\nERROR:  Invalid format for API_KEY: $API_KEY \n"
         echo "API Keys are generally 80 to 430 characters long and are alphanumeric."
         echo ""
         exit 1
@@ -76,7 +70,7 @@ function check_args () {
     # Check VERSION_STATUS for valid values and make sure that the value is in lowercase
     VERSION_STATUS=$(echo $VERSION_STATUS | tr [A-Z] [a-z])
     if [[ ${VERSION_STATUS} != *"ga"* && "$VERSION_STATUS" != *"ea"* ]]; then
-        printf "\n${Red}ERROR:  Invalid format for VERSION_STATUS: $VERSION_STATUS ${Color_Off}\n"
+        printf "\nERROR:  Invalid format for VERSION_STATUS: $VERSION_STATUS \n"
         echo "The value of VERSION_STATUS must contain either 'ea' or 'ga'"
         echo ""
         exit 1
@@ -102,7 +96,7 @@ function detect_pkg_mgr_info () {
         PACKAGE_MANAGER='dnf'
         AGENT_INSTALL_SYNTAX='rpm -i --nodigest'
     else
-        printf "\n${Red}ERROR:  Unknown Release ID: $1 ${Color_Off}\n"
+        printf "\nERROR:  Unknown Release ID: $1 \n"
         cat /etc/*release
         echo ""
     fi
@@ -111,7 +105,7 @@ function detect_pkg_mgr_info () {
 # Check if curl is installed.
 function curl_check () {
     if ! [[ -x "$(which curl)" ]]; then
-        printf "\n${Yellow}INFO:  Installing curl utility in order to interact with S1 API... ${Color_Off}\n"
+        printf "\nINFO:  Installing curl utility in order to interact with S1 API... \n"
         if [[ $1 = 'apt' ]]; then
             sudo apt-get update && sudo apt-get install -y curl
         elif [[ $1 = 'yum' ]]; then
@@ -121,16 +115,16 @@ function curl_check () {
         elif [[ $1 = 'dnf' ]]; then
             sudo dnf install -y curl
         else
-            printf "\n${Red}ERROR:  Unsupported file extension.${Color_Off}\n"
+            printf "\nERROR:  Unsupported file extension.\n"
         fi
     else
-        printf "\n${Yellow}INFO:  curl is already installed.${Color_Off}\n"
+        printf "\nINFO:  curl is already installed.\n"
     fi
 }
 
 function jq_check () {
     if ! [[ -x "$(which jq)" ]]; then
-        printf "\n${Yellow}INFO:  Installing jq utility in order to parse json responses from api... ${Color_Off}\n"
+        printf "\nINFO:  Installing jq utility in order to parse json responses from api... \n"
         if [[ $1 = 'apt' ]]; then
             sudo apt update && sudo apt install -y jq
         elif [[ $1 = 'yum' ]]; then
@@ -140,16 +134,16 @@ function jq_check () {
         elif [[ $1 = 'dnf' ]]; then
             sudo dnf install -y jq
         else
-            printf "\n${Red}ERROR:  unsupported file extension: $1 ${Color_Off}\n"
+            printf "\nERROR:  unsupported file extension: $1 \n"
         fi 
     else
-        printf "\n${Yellow}INFO:  jq is already installed.${Color_Off}\n"
+        printf "\nINFO:  jq is already installed.\n"
     fi
 }
 
 function unzip_check () {
     if ! [[ -x "$(which unzip)" ]]; then
-        printf "\n${Yellow}INFO:  Installing unzip utility in order to install awscli... ${Color_Off}\n"
+        printf "\nINFO:  Installing unzip utility in order to install awscli... \n"
         if [[ $1 = 'apt' ]]; then
             sudo apt-get update && sudo apt-get install -y unzip
         elif [[ $1 = 'yum' ]]; then
@@ -159,16 +153,16 @@ function unzip_check () {
         elif [[ $1 = 'dnf' ]]; then
             sudo dnf install -y unzip
         else
-            printf "\n${Red}ERROR:  unsupported file extension: $1 ${Color_Off}\n"
+            printf "\nERROR:  unsupported file extension: $1 \n"
         fi 
     else
-        printf "\n${Yellow}INFO:  unzip is already installed.${Color_Off}\n"
+        printf "\nINFO:  unzip is already installed.\n"
     fi
 }
 
 function awscli_check () {
     if ! [[ -x "$(which aws)" ]]; then
-        printf "\n${Yellow}INFO:  Installing awscli utility in order to communicate with Systems Manager Parameter Store... ${Color_Off}\n"     
+        printf "\nINFO:  Installing awscli utility in order to communicate with Systems Manager Parameter Store... \n"     
         if [[ $1 = 'apt' ]]; then
             sudo apt update && sudo apt install -y awscli
         elif [[ $1 = 'yum' ]]; then
@@ -181,7 +175,7 @@ function awscli_check () {
                 curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
                 unzip awscliv2.zip
             else
-                printf "\n${Red}ERROR:  OS_ARCH is neither 'aarch64' nor 'x86_64':  $OS_ARCH ${Color_Off}\n"
+                printf "\nERROR:  OS_ARCH is neither 'aarch64' nor 'x86_64':  $OS_ARCH \n"
             fi
             sudo ./aws/install --bin-dir /usr/bin --update
         elif [[ $1 = 'zypper' ]]; then
@@ -189,16 +183,16 @@ function awscli_check () {
         elif [[ $1 = 'dnf' ]]; then
             sudo dnf install -y awscli
         else
-            printf "\n${Red}ERROR:  unsupported file extension: $1 ${Color_Off}\n"
+            printf "\nERROR:  unsupported file extension: $1 \n"
         fi 
     else
-        printf "\n${Yellow}INFO:  awscli is already installed.${Color_Off}\n"
+        printf "\nINFO:  awscli is already installed.\n"
     fi
 }
 
 function check_api_response () {
     if [[ $(cat response.txt | jq 'has("errors")') == 'true' ]]; then
-        printf "\n${Red}ERROR:  Could not authenticate using the existing mgmt server and api key. ${Color_Off}\n"
+        printf "\nERROR:  Could not authenticate using the existing mgmt server and api key. \n"
         echo ""
         exit 1
     fi
@@ -226,11 +220,11 @@ function find_agent_info_by_architecture () {
             fi
         done
     else
-        printf "\n${Red}ERROR:  OS_ARCH is neither 'aarch64' nor 'x86_64':  $OS_ARCH ${Color_Off}\n"
+        printf "\nERROR:  OS_ARCH is neither 'aarch64' nor 'x86_64':  $OS_ARCH \n"
     fi
 
     if [[ $AGENT_FILE_NAME = '' ]]; then
-        printf "\n${Red}ERROR:  Could not obtain AGENT_FILE_NAME in find_agent_info_by_architecture function. ${Color_Off}\n"
+        printf "\nERROR:  Could not obtain AGENT_FILE_NAME in find_agent_info_by_architecture function. \n"
         echo ""
         exit 1
     fi
@@ -247,18 +241,18 @@ jq_check $PACKAGE_MANAGER
 sudo curl -sH "Accept: application/json" -H "Authorization: ApiToken $API_KEY" "$S1_MGMT_URL$API_ENDPOINT?countOnly=false&packageTypes=Agent&osTypes=linux&sortBy=createdAt&limit=20&fileExtension=$FILE_EXTENSION&sortOrder=desc" > response.txt
 check_api_response
 find_agent_info_by_architecture
-printf "\n${Yellow}INFO:  Downloading $AGENT_FILE_NAME ${Color_Off}\n"
+printf "\nINFO:  Downloading $AGENT_FILE_NAME \n"
 sudo curl -sH "Authorization: ApiToken $API_KEY" $AGENT_DOWNLOAD_LINK -o /tmp/$AGENT_FILE_NAME
-printf "\n${Yellow}INFO:  Installing S1 Agent: $(echo "sudo $AGENT_INSTALL_SYNTAX /tmp/$AGENT_FILE_NAME") ${Color_Off}\n"
+printf "\nINFO:  Installing S1 Agent: $(echo "sudo $AGENT_INSTALL_SYNTAX /tmp/$AGENT_FILE_NAME") \n"
 sudo $AGENT_INSTALL_SYNTAX /tmp/$AGENT_FILE_NAME
-printf "\n${Yellow}INFO:  Setting Site Token... ${Color_Off}\n"
+printf "\nINFO:  Setting Site Token... \n"
 sudo /opt/sentinelone/bin/sentinelctl management token set $SITE_TOKEN
 
 
 #clean up files..
-printf "\n${Yellow}INFO:  Cleaning up files... ${Color_Off}\n"
+printf "\nINFO:  Cleaning up files... \n"
 rm -f response.txt
 rm -f versions.txt
 rm -f /tmp/$AGENT_FILE_NAME
 
-printf "\n${Green}SUCCESS:  Finished installing SentinelOne Agent. ${Color_Off}\n\n"
+printf "\nSUCCESS:  Finished installing SentinelOne Agent. \n\n"
