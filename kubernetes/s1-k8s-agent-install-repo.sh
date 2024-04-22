@@ -64,11 +64,6 @@ fi
 
 # If the 4 mandatory variables have not been sourced from the s1.config file, passed via cmdline 
 #   arguments or read from exported variables of the parent shell, we'll prompt the user for them.
-if [ -z $S1_SITE_TOKEN ];then
-    echo ""
-    read -p "Please enter your SentinelOne Site Token: " S1_SITE_TOKEN
-fi
-
 if [ -z $S1_REPOSITORY_USERNAME ];then
     echo ""
     read -p "Please enter your SentinelOne Repo Username: " S1_REPOSITORY_USERNAME
@@ -77,6 +72,11 @@ fi
 if [ -z $S1_REPOSITORY_PASSWORD ];then
     echo ""
     read -p "Please enter your SentinelOne Repo Password: " S1_REPOSITORY_PASSWORD
+fi
+
+if [ -z $S1_SITE_TOKEN ];then
+    echo ""
+    read -p "Please enter your SentinelOne Site Token: " S1_SITE_TOKEN
 fi
 
 if [ -z $S1_AGENT_TAG ];then
