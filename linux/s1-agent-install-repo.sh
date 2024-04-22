@@ -57,11 +57,6 @@ fi
 
 # If the 4 needed variables have not been sourced from the s1.config file, passed via cmdline 
 #   arguments or read from exported variables of the parent shell, we'll prompt the user for them.
-if [ -z $S1_SITE_TOKEN ];then
-    echo ""
-    read -p "Please enter your SentinelOne Site Token: " S1_SITE_TOKEN
-fi
-
 if [ -z $S1_REPOSITORY_USERNAME ];then
     echo ""
     read -p "Please enter your SentinelOne Repo Username: " S1_REPOSITORY_USERNAME
@@ -70,6 +65,11 @@ fi
 if [ -z $S1_REPOSITORY_PASSWORD ];then
     echo ""
     read -p "Please enter your SentinelOne Repo Password: " S1_REPOSITORY_PASSWORD
+fi
+
+if [ -z $S1_SITE_TOKEN ];then
+    echo ""
+    read -p "Please enter your SentinelOne Site Token: " S1_SITE_TOKEN
 fi
 
 if [ -z $S1_AGENT_VERSION ];then
@@ -170,8 +170,11 @@ function install_using_apt () {
     printf "\n${Yellow}INFO:  Installing with apt...${Color_Off} \n\n" 
     S1_REPOSITORY_URL="deb.sentinelone.net"
     # add public signature verification key for the repository to ensure the integrity and authenticity of packages
-    curl -sLO https://us-apt.pkg.dev/doc/repo-signing-key.gpg | sudo tee /etc/apt/trusted.gpg.d/sentinelone-repo-signing-key.gpg
-    curl -sLO https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo tee /etc/apt/trusted.gpg.d/sentinelone-apt-key.gpg
+    # requires gpg, otherwise use fallback method below for bionic|buster
+    if (which gpg &> /dev/null); then
+        curl -sL https://us-apt.pkg.dev/doc/repo-signing-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/sentinelone-repo-signing-key.gpg
+        curl -sL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/sentinelone-apt-key.gpg
+    fi
     # remove any existing source lists for sentinelone
     rm -f /etc/apt/sources.list.d/sentinelone-registry-ga.list
     rm -f /etc/apt/sources.list.d/sentinelone-registry-ea.list
@@ -179,7 +182,7 @@ function install_using_apt () {
     if (cat /etc/os-release | grep -E "VERSION_CODENAME=(bionic|buster)" &> /dev/null ); then
         printf "\n${Yellow}INFO:  Detected Bionic Beaver or Buster.  Using older GPG/Auth methods...${Color_Off} \n\n" 
         # add public signature verification key for the repository to ensure the integrity and authenticity of packages
-        curl -s https://us-apt.pkg.dev/doc/repo-signing-key.gpg | apt-key add - && curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+        curl -sL https://us-apt.pkg.dev/doc/repo-signing-key.gpg | apt-key add - && curl -sL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
         # add the GA repository to the list of sources
         cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ga.list
 deb [trusted=yes] https://${S1_REPOSITORY_USERNAME}:${S1_REPOSITORY_PASSWORD}@${S1_REPOSITORY_URL} apt-ga main
