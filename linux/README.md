@@ -1,4 +1,4 @@
-# Sentinel One Deployment and Automation tools for Linux
+# SentinelOne Deployment and Automation tools for Linux
 
 ## s1-agent-install-mgmt-api.sh
 
