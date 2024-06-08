@@ -130,7 +130,7 @@ function check_args () {
 
 # Determine the CPU architecture
 function find_agent_info_by_architecture () {
-    OS_ARCH=$(uname -p)
+    OS_ARCH=$(uname -m)
     if [[ $OS_ARCH == "aarch64" ]]; then
         printf "\n${Yellow}INFO:  CPU Architecture is $OS_ARCH... ${Color_Off} \n\n" 
     elif [[ $OS_ARCH == "x86_64" || $OS_ARCH == "unknown" ]]; then
