@@ -88,7 +88,7 @@ fi
 
 if [ -z $S1_AGENT_TAG ];then
     echo ""
-    read -p "Please enter the SentinelOne Agent Version Tag to install (ie: 23.4.2-ga): " S1_AGENT_VERSION
+    read -p "Please enter the SentinelOne Agent Version Tag to install (ie: 23.4.2-ga): " S1_AGENT_TAG
 fi
 
 if [ -z $PRIVATE_REPO_BASE ];then
@@ -204,12 +204,16 @@ fi
 
 # agent
 printf "\n${Yellow}INFO:  Pulling agent images from SentinelOne Repository \n\n${Color_Off}"
+printf "\n${Yellow}INFO: Retriving Image Tag: ${S1_REPO_AGENT}:${S1_AGENT_TAG_x86_64} \n\n${Color_Off}"
 docker image pull ${S1_REPO_AGENT}:${S1_AGENT_TAG_x86_64}
+printf "\n${Yellow}INFO: Retriving Image Tag: ${S1_REPO_AGENT}:${S1_AGENT_TAG_aarch64} \n\n${Color_Off}"
 docker image pull ${S1_REPO_AGENT}:${S1_AGENT_TAG_aarch64}
 
 # helper
 printf "\n${Yellow}INFO:  Pulling helper images from SentinelOne Repository \n\n${Color_Off}"
+printf "\n${Yellow}INFO: Retriving Image Tag: ${S1_REPO_HELPER}:${S1_HELPER_TAG_x86_64} \n\n${Color_Off}"
 docker image pull ${S1_REPO_HELPER}:${S1_HELPER_TAG_x86_64}
+printf "\n${Yellow}INFO: Retriving Image Tag: ${S1_REPO_HELPER}:${S1_HELPER_TAG_aarch64} \n\n${Color_Off}"
 docker image pull ${S1_REPO_HELPER}:${S1_HELPER_TAG_aarch64}
 
 ################################################################################

@@ -4,7 +4,9 @@
 # 
 # Usage:  sudo ./s1-agent-install-repo.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD S1_SITE_TOKEN S1_AGENT_VERSION
 # 
-# Version:  1.0
+# Notes: This script will install the curl utility on ubuntu / debian systems if not already installed.
+# 
+# Version:  2024.04.22
 ##############################################################################################################
 
 
@@ -169,6 +171,17 @@ function detect_pkg_mgr_info () {
 function install_using_apt () {
     printf "\n${Yellow}INFO:  Installing with apt...${Color_Off} \n\n" 
     S1_REPOSITORY_URL="deb.sentinelone.net"
+    # ensure curl is installed before downloading signing keys
+    if ! (which curl &> /dev/null); then
+        printf "\n${Yellow}INFO:  Installing curl utility in order to download gpg keys... ${Color_Off}\n"
+        apt-get update
+        apt-get install -y curl
+        if [ $? -ne 0 ]; then
+            printf "\n${Red}ERROR:  Unable to install required dependency curl.${Color_Off}\n"
+            exit 1
+        fi
+    fi
+
     # add public signature verification key for the repository to ensure the integrity and authenticity of packages
     # requires gpg, otherwise use fallback method below for bionic|buster
     if (which gpg &> /dev/null); then
