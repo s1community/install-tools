@@ -4,7 +4,7 @@
 # 
 # Usage:  sudo ./s1-k8s-agent-install-repo.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD S1_SITE_TOKEN S1_AGENT_TAG S1_AGENT_LOG_LEVEL K8S_TYPE
 # 
-# Version:  1.0
+# Version:  2024-07-22
 #
 # Reference:  https://community.sentinelone.com/s/article/000008772
 #
@@ -32,7 +32,7 @@ White='\033[0;37m'        # White
 # S1_REPOSITORY_USERNAME=""
 # S1_REPOSITORY_PASSWORD=""
 # S1_SITE_TOKEN=""
-# S1_AGENT_TAG="23.4.2-ga"
+# S1_AGENT_TAG="24.1.2-ga"
 # S1_AGENT_LOG_LEVEL="info"
 # K8S_TYPE="k8s"
 
@@ -59,7 +59,9 @@ fi
 if [ $# -eq 0 ]; then
     printf "\n${Yellow}INFO:  No input arguments were passed to the script. \n\n${Color_Off}"
     S1_AGENT_LOG_LEVEL="info"
-    K8S_TYPE="k8s"
+    if [ -z ${K8S_TYPE} ]; then 
+        K8S_TYPE="k8s"
+    fi
 fi
 
 # If the 4 mandatory variables have not been sourced from the s1.config file, passed via cmdline 
@@ -81,10 +83,10 @@ fi
 
 if [ -z $S1_AGENT_TAG ];then
     echo ""
-    read -p "Please enter the SentinelOne Agent Version to install (ie: 23.4.2-ga): " S1_AGENT_TAG
+    read -p "Please enter the SentinelOne Agent Version to install (ie: 24.1.2-ga): " S1_AGENT_TAG
 fi
 
-# If K8S_TYPE is set to openshift or fargate, we set special variables that are used to dynamically add helm flags during install
+# If K8S_TYPE is set to openshift, autopilot, or fargate, we set special variables that are used to dynamically add helm flags during install
 case $K8S_TYPE in
   k8s)
   echo "standard k8s"
@@ -93,6 +95,11 @@ case $K8S_TYPE in
   openshift)
   OPENSHIFT='true'
   echo "openshift"
+  ;;
+
+  autopilot)
+  AUTOPILOT='true'
+  echo "autopilot"
   ;;
 
   fargate)
@@ -115,6 +122,8 @@ S1_PULL_SECRET_NAME=sentinelone-registry
 HELM_RELEASE_NAME=sentinelone
 S1_NAMESPACE=sentinelone
 # Resource Limits and Requests for Agent
+# GKE Autopilot may override these based on bursting availability in your clusters
+# https://cloud.google.com/kubernetes-engine/docs/concepts/autopilot-resource-requests
 S1_AGENT_LIMITS_MEMORY='1945Mi'
 S1_AGENT_LIMITS_CPU='900m'
 S1_AGENT_REQUESTS_MEMORY='800Mi'
@@ -276,6 +285,7 @@ helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --versio
     --set configuration.proxy=${S1_PROXY} \
     --set configuration.dv_proxy=${S1_DV_PROXY} \
     ${OPENSHIFT:+--set configuration.platform.type=openshift} \
+    ${AUTOPILOT:+--set configuration.platform.gke.autopilot=true} \
     ${FARGATE:+--set configuration.env.injection.enabled=true --set helper.labels.Application=sentinelone --set configuration.env.agent.pod_uid=0 --set configuration.env.agent.pod_gid=0} \
     sentinelone/s1-agent
 

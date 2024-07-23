@@ -1,0 +1,16 @@
+# Example format of 's1.config' file for usage with this script
+
+# How to Install the Agent from a Public Repository:  https://community.sentinelone.com/s/article/000008771
+S1_REPOSITORY_USERNAME=""
+S1_REPOSITORY_PASSWORD=""
+
+# Getting a Site or Group Token: https://community.sentinelone.com/s/article/000004904
+S1_SITE_TOKEN=""
+
+S1_AGENT_TAG="24.1.2-ga"
+
+# set to either [ info | debug ]
+S1_AGENT_LOG_LEVEL="info"
+
+# set to one of [ k8s | openshift | autopilot | fargate ]
+K8S_TYPE="k8s"

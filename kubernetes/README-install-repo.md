@@ -14,6 +14,6 @@ A helper script to automate the installation, association to a site and activati
 | S1_REPOSITORY_USERNAME | Your private registry username | Yes |
 | S1_REPOSITORY_PASSWORD | Your private registry password | Yes |
 | S1_SITE_TOKEN | Your SentinelOne Site Token | Yes |
-| S1_AGENT_TAG | The version/tag of the K8s agent. ie: 23.4.2-ga | Yes |
+| S1_AGENT_TAG | The version/tag of the K8s agent. ie: 24.1.2-ga | Yes |
 | S1_AGENT_LOG_LEVEL | Your private registry password. ie: info (default), debug | No |
-| K8S_TYPE | The target K8s type.  ie: k8s (default), openshift, fargate | No |
+| K8S_TYPE | The target K8s type.  ie: k8s (default), openshift, autopilot, fargate | No |
