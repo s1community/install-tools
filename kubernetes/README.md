@@ -6,3 +6,9 @@ A helper script to automate the installation, association to a site and activati
 
 [Documentation](README-install-repo.md)
 
+
+## azure-devops-pipeline-example.yml
+
+A sample pipeline for use in [Azure DevOps](https://azure.microsoft.com/en-us/products/devops/pipelines) to deploy the SentinelOne Kubernetes agent to an existing EKS cluster.
+
+[Documentation](README-azure-devops.md) 
