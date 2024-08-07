@@ -87,7 +87,7 @@ stages:
           echo "Setting up Kubernetes context..."
           az aks get-credentials --resource-group $(resourceGroup) --name $(aksClusterName)
       displayName: 'Get AKS cluster context'
-    - task: CmdLine@3
+    - task: CmdLine@2
       displayName: 'Deploy SentinelOne'
       inputs:
         script: |
