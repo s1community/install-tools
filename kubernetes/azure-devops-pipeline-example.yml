@@ -1,0 +1,147 @@
+trigger:
+  branches:
+    include:
+    - main
+
+# This section creates a runner for the deployment
+pool:
+  vmImage: 'ubuntu-latest'
+
+
+variables:
+# Azure-specific variables
+- name: azureSubscription
+  value: 'PLACEHOLDER_YOUR_SERVICE_CONNECTION_NAME'
+- name: resourceGroup
+  value: 'PLACEHOLDER_TARGET_RESOURCE_GROUP_FOR_YOUR_AKS_CLUSTER'
+- name: aksClusterName
+  value: 'PLACEHOLDER_TARGET_NAME_OF_YOUR_AKS_CLUSTER'
+
+# The following variable values can be customized as you see fit (or can be left as is).
+- name: S1_AGENT_TAG
+  value: '24.1.2-ga'
+- name: S1_HELPER_TAG
+  value: $(S1_AGENT_TAG)
+- name: REPO_BASE
+  value: 'containers.sentinelone.net'
+- name: REPO_HELPER
+  value: $(REPO_BASE)/cws-agent/s1helper
+- name: REPO_AGENT
+  value: $(REPO_BASE)/cws-agent/s1agent
+- name: S1_PULL_SECRET_NAME
+  value: 's1poc'
+- name: HELM_RELEASE_NAME
+  value: 's1'
+# HELM_RELEASE_VERSION is derived from S1_AGENT_TAG in the Deploy SentinelOne task
+- name: HELM_RELEASE_VERSION
+  value: ''  
+- name: S1_NAMESPACE
+  value: 'sentinelone'
+
+# Resource Limits and Requests for Agent
+- name: S1_AGENT_LIMITS_MEMORY
+  value: '1945Mi'
+- name: S1_AGENT_LIMITS_CPU
+  value: '900m'
+- name: S1_AGENT_REQUESTS_MEMORY
+  value: '800Mi'
+- name: S1_AGENT_REQUESTS_CPU
+  value: '500m'
+
+# Resource Limits and Requests for Helper
+- name: S1_HELPER_LIMITS_MEMORY
+  value: '1945Mi'
+- name: S1_HELPER_LIMITS_CPU
+  value: '900m'
+- name: S1_HELPER_REQUESTS_MEMORY
+  value: '100Mi'
+- name: S1_HELPER_REQUESTS_CPU
+  value: '100m'
+
+# Environment
+- name: S1_AGENT_HEAP_TRIMMING_ENABLE
+  value: 'true'
+- name: S1_AGENT_LOG_LEVEL
+  value: 'info'
+- name: S1_PROXY
+  value: ''
+- name: S1_DV_PROXY
+  value: ''
+
+
+stages:
+- stage: __default
+  jobs:
+  - job: DeploySentinelOneToAKS
+    steps:
+    - task: HelmInstaller@1
+      inputs:
+        helmVersionToInstall: 'latest'
+      displayName: 'Install helm'
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Setting up Kubernetes context..."
+          az aks get-credentials --resource-group $(resourceGroup) --name $(aksClusterName)
+      displayName: 'Get AKS cluster context'
+    - task: CmdLine@3
+      displayName: 'Deploy SentinelOne'
+      inputs:
+        script: |
+          # Get cluster name from the current context
+          CLUSTER_NAME=$(kubectl config view --minify -o jsonpath='{.clusters[].name}')
+          echo "Cluster Name:  ${CLUSTER_NAME}"
+
+          if ! kubectl get namespace ${S1_NAMESPACE} &> /dev/null ; then
+              echo "Creating namespace ${S1_NAMESPACE}..."
+              kubectl create namespace ${S1_NAMESPACE}
+          fi
+
+          sleep 5
+
+          if ! kubectl get secret ${S1_PULL_SECRET_NAME} -n ${S1_NAMESPACE} &> /dev/null ; then
+              echo "Creating pull secret in ${S1_NAMESPACE}..."
+              kubectl create secret docker-registry -n ${S1_NAMESPACE} ${S1_PULL_SECRET_NAME} --docker-username=$(S1_PULL_SECRET_USERNAME) --docker-password=$(S1_PULL_SECRET_TOKEN) --docker-server=${REPO_BASE}
+          fi
+
+          echo "Adding SentinelOne helm repo"
+          helm repo add sentinelone https://charts.sentinelone.com
+          helm repo update
+
+          if [ -z ${HELM_RELEASE_VERSION} ] || [ "${HELM_RELEASE_VERSION}" = "" ]; then
+              echo "Generating helm repo version from S1_AGENT_TAG ${S1_AGENT_TAG}..."
+              HELM_RELEASE_VERSION=$(echo $S1_AGENT_TAG | cut -d "-" -f1)
+              echo "HELM_RELEASE_VERSION=${HELM_RELEASE_VERSION}"
+          fi
+
+          echo "Deploying SentinelOne Helm Chart"
+          helm upgrade --install ${HELM_RELEASE_NAME} \
+              --namespace=${S1_NAMESPACE} \
+              --version=${HELM_RELEASE_VERSION} \
+              --set secrets.imagePullSecret=${S1_PULL_SECRET_NAME} \
+              --set secrets.site_key.value=$(S1_SITE_TOKEN) \
+              --set configuration.repositories.agent=${REPO_AGENT} \
+              --set configuration.tag.agent=${S1_AGENT_TAG} \
+              --set configuration.repositories.helper=${REPO_HELPER} \
+              --set configuration.tag.helper=${S1_HELPER_TAG} \
+              --set configuration.cluster.name=${CLUSTER_NAME} \
+              --set helper.nodeSelector."kubernetes\\.io/os"=linux \
+              --set agent.nodeSelector."kubernetes\\.io/os"=linux \
+              --set helper.resources.limits.memory=${S1_HELPER_LIMITS_MEMORY} \
+              --set helper.resources.limits.cpu=${S1_HELPER_LIMITS_CPU} \
+              --set helper.resources.requests.memory=${S1_HELPER_REQUESTS_MEMORY} \
+              --set helper.resources.requests.cpu=${S1_HELPER_REQUESTS_CPU} \
+              --set agent.resources.limits.memory=${S1_AGENT_LIMITS_MEMORY} \
+              --set agent.resources.limits.cpu=${S1_AGENT_LIMITS_CPU} \
+              --set agent.resources.requests.memory=${S1_AGENT_REQUESTS_MEMORY} \
+              --set agent.resources.requests.cpu=${S1_AGENT_REQUESTS_CPU} \
+              --set configuration.env.agent.heap_trimming_enable=${S1_AGENT_HEAP_TRIMMING_ENABLE} \
+              --set configuration.env.agent.log_level=${S1_AGENT_LOG_LEVEL} \
+              --set configuration.proxy=${S1_PROXY} \
+              --set configuration.dv_proxy=${S1_DV_PROXY} \
+              sentinelone/s1-agent
+
+          echo "Done"
