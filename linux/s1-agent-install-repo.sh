@@ -6,7 +6,7 @@
 # 
 # Notes: This script will install the curl utility on ubuntu / debian systems if not already installed.
 # 
-# Version:  2024.04.22
+# Version:  2024.09.17
 ##############################################################################################################
 
 
@@ -198,23 +198,23 @@ function install_using_apt () {
         curl -sL https://us-apt.pkg.dev/doc/repo-signing-key.gpg | apt-key add - && curl -sL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
         # add the GA repository to the list of sources
         cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ga.list
-deb [trusted=yes] https://${S1_REPOSITORY_USERNAME}:${S1_REPOSITORY_PASSWORD}@${S1_REPOSITORY_URL} apt-ga main
+deb [trusted=yes] https://${S1_REPOSITORY_USERNAME}:${S1_REPOSITORY_PASSWORD}@${S1_REPOSITORY_URL}/apt-ga apt-ga main
 EOF
         if ( echo $INCLUDE_EARLY_ACCESS_REPO | grep -E "([Tt]rue|[Yy]es|[Yy])" &> /dev/null ); then
             # add the EA repository to the list of sources (if INCLUDE_EARLY_ACCESS_REPO is set to true)
             cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ea.list
-deb [trusted=yes] https://${S1_REPOSITORY_USERNAME}:${S1_REPOSITORY_PASSWORD}@${S1_REPOSITORY_URL} apt-ea main
+deb [trusted=yes] https://${S1_REPOSITORY_USERNAME}:${S1_REPOSITORY_PASSWORD}@${S1_REPOSITORY_URL}/apt-ea apt-ea main
 EOF
         fi
     else
         # add the GA repository to the list of sources
         cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ga.list
-deb [trusted=yes] https://${S1_REPOSITORY_URL} apt-ga main
+deb [trusted=yes] https://${S1_REPOSITORY_URL}/apt-ga apt-ga main
 EOF
         if ( echo $INCLUDE_EARLY_ACCESS_REPO | grep -E "([Tt]rue|[Yy]es|[Yy])" &> /dev/null ); then
             # add the EA repository to the list of sources (if INCLUDE_EARLY_ACCESS_REPO is set to true)
             cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ea.list
-deb [trusted=yes] https://${S1_REPOSITORY_URL} apt-ea main
+deb [trusted=yes] https://${S1_REPOSITORY_URL}/apt-ea apt-ea main
 EOF
         fi
         # add repo credentials to /etc/apt/auth.conf for the SentinelOne repo
