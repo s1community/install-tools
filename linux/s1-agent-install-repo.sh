@@ -191,31 +191,31 @@ function install_using_apt () {
         set +x
     fi
     # remove any existing source lists for sentinelone
-    rm -f /etc/apt/sources.list.d/sentinelone-registry-ga.list
-    rm -f /etc/apt/sources.list.d/sentinelone-registry-ea.list
+    rm -f /etc/apt/sources.list.d/sentinelone-repository-ga.list
+    rm -f /etc/apt/sources.list.d/sentinelone-repository-ea.list
 
     if (cat /etc/os-release | grep -E "VERSION_CODENAME=(bionic|buster)" &> /dev/null ); then
         printf "\n${Yellow}INFO:  Detected Bionic Beaver or Buster.  Using older GPG/Auth methods...${Color_Off} \n\n"
         # add public signature verification key for the repository to ensure the integrity and authenticity of packages
         curl -sL  https://${S1_REPOSITORY_URL}/v1/gpg/package-key.gpg | apt-key add - && curl -sL https://${S1_REPOSITORY_URL}/v1/gpg/repo-key.gpg | apt-key add -
         # add the GA repository to the list of sources
-        cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ga.list
+        cat <<- EOF > /etc/apt/sources.list.d/sentinelone-repository-ga.list
 deb [trusted=yes] https://${S1_REPOSITORY_USERNAME}:${S1_REPOSITORY_PASSWORD}@${S1_REPOSITORY_URL}/apt-ga apt-ga main
 EOF
         if ( echo $INCLUDE_EARLY_ACCESS_REPO | grep -E "([Tt]rue|[Yy]es|[Yy])" &> /dev/null ); then
             # add the EA repository to the list of sources (if INCLUDE_EARLY_ACCESS_REPO is set to true)
-            cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ea.list
+            cat <<- EOF > /etc/apt/sources.list.d/sentinelone-repository-ea.list
 deb [trusted=yes] https://${S1_REPOSITORY_USERNAME}:${S1_REPOSITORY_PASSWORD}@${S1_REPOSITORY_URL}/apt-ea apt-ea main
 EOF
         fi
     else
         # add the GA repository to the list of sources
-        cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ga.list
+        cat <<- EOF > /etc/apt/sources.list.d/sentinelone-repository-ga.list
 deb [trusted=yes] https://${S1_REPOSITORY_URL}/apt-ga apt-ga main
 EOF
         if ( echo $INCLUDE_EARLY_ACCESS_REPO | grep -E "([Tt]rue|[Yy]es|[Yy])" &> /dev/null ); then
             # add the EA repository to the list of sources (if INCLUDE_EARLY_ACCESS_REPO is set to true)
-            cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ea.list
+            cat <<- EOF > /etc/apt/sources.list.d/sentinelone-repository-ea.list
 deb [trusted=yes] https://${S1_REPOSITORY_URL}/apt-ea apt-ea main
 EOF
         fi
@@ -235,9 +235,9 @@ function install_using_yum_or_dnf () {
     printf "\n${Yellow}INFO:  Installing with yum or dnf...${Color_Off} \n\n"
     S1_REPOSITORY_URL="rpm.sentinelone.net"
     # add public signature verification key for the repository to ensure the integrity and authenticity of packages
-    rpm --import curl -sL https://${S1_REPOSITORY_URL}/v1/gpg/package-key.gpg
+    rpm --import https://${S1_REPOSITORY_URL}/v1/gpg/package-key.gpg
     # add the GA repository to the list of sources
-    cat <<- EOF > /etc/yum.repos.d/sentinelone-registry-ga.repo
+    cat <<- EOF > /etc/yum.repos.d/sentinelone-repository-ga.repo
 [yum-ga]
 name=yum-ga
 baseurl=https://${S1_REPOSITORY_URL}/yum-ga
@@ -249,7 +249,7 @@ password=${S1_REPOSITORY_PASSWORD}
 EOF
     # add the EA repository to the list of sources (if INCLUDE_EARLY_ACCESS_REPO is set to true)
     if ( echo $INCLUDE_EARLY_ACCESS_REPO | grep -E "([Tt]rue|[Yy]es|[Yy])" &> /dev/null ); then
-        cat <<- EOF > /etc/yum.repos.d/sentinelone-registry-ea.repo
+        cat <<- EOF > /etc/yum.repos.d/sentinelone-repository-ea.repo
 [yum-ea]
 name=yum-ea
 baseurl=https://${S1_REPOSITORY_URL}/yum-ea
