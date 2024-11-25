@@ -1,12 +1,12 @@
 #!/bin/bash
 ##############################################################################################################
 # Description:  Bash script to aid with automating S1 Agent install on Linux
-# 
+#
 # Usage:  sudo ./s1-agent-install-repo.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD S1_SITE_TOKEN S1_AGENT_VERSION
-# 
+#
 # Notes: This script will install the curl utility on ubuntu / debian systems if not already installed.
-# 
-# Version:  2024.09.17
+#
+# Version:  2024.11.22
 ##############################################################################################################
 
 
@@ -30,7 +30,7 @@ White='\033[0;37m'        # White
 # S1_REPOSITORY_USERNAME=""
 # S1_REPOSITORY_PASSWORD=""
 # S1_SITE_TOKEN=""
-# S1_AGENT_VERSION="23.4.1.4"
+# S1_AGENT_VERSION="24.2.2.20"
 # INCLUDE_EARLY_ACCESS_REPO="true"
 
 
@@ -40,7 +40,7 @@ if [ -f s1.config ]; then
     source s1.config
 else
     printf "\n${Yellow}INFO:  No 's1.config' file found in $(pwd).${Color_Off}\n\n"
-fi 
+fi
 
 # Check if all 4 arguments were passed to the script
 if [ $# -eq 4 ] || [ $# -eq 5 ]; then
@@ -57,7 +57,7 @@ if [ $# -eq 0 ]; then
     printf "\n${Yellow}INFO:  No input arguments were passed to the script. \n\n${Color_Off}"
 fi
 
-# If the 4 needed variables have not been sourced from the s1.config file, passed via cmdline 
+# If the 4 needed variables have not been sourced from the s1.config file, passed via cmdline
 #   arguments or read from exported variables of the parent shell, we'll prompt the user for them.
 if [ -z $S1_REPOSITORY_USERNAME ];then
     echo ""
@@ -134,10 +134,10 @@ function check_args () {
 function find_agent_info_by_architecture () {
     OS_ARCH=$(uname -p)
     if [[ $OS_ARCH == "aarch64" ]]; then
-        printf "\n${Yellow}INFO:  CPU Architecture is $OS_ARCH... ${Color_Off} \n\n" 
+        printf "\n${Yellow}INFO:  CPU Architecture is $OS_ARCH... ${Color_Off} \n\n"
     elif [[ $OS_ARCH == "x86_64" || $OS_ARCH == "unknown" ]]; then
         OS_ARCH="x86_64" # for cases when uname -p returns "unknown" (ie: Some versions of Fedora), we'll assume x86_64.
-        printf "\n${Yellow}INFO:  CPU Architecture is $OS_ARCH... ${Color_Off} \n\n" 
+        printf "\n${Yellow}INFO:  CPU Architecture is $OS_ARCH... ${Color_Off} \n\n"
     else
         printf "\n${Red}ERROR:  OS_ARCH is neither 'aarch64' nor 'x86_64':  $OS_ARCH ${Color_Off}\n"
     fi
@@ -151,13 +151,13 @@ function find_agent_info_by_architecture () {
 # Detect the correct Package Manager to use given the Operating System's ID
 function detect_pkg_mgr_info () {
     if (cat /etc/os-release | grep -E "ID=(ubuntu|debian)" &> /dev/null ); then
-        printf "\n${Yellow}INFO:  Detected Debian-based OS...${Color_Off} \n\n" 
+        printf "\n${Yellow}INFO:  Detected Debian-based OS...${Color_Off} \n\n"
         install_using_apt
     elif (cat /etc/os-release | grep -E "ID=\"(rhel|amzn|centos|ol|scientific|rocky|almalinux)\"" &> /dev/null ); then
-        printf "\n${Yellow}INFO:  Detected Red Hat-based OS...${Color_Off} \n\n" 
+        printf "\n${Yellow}INFO:  Detected Red Hat-based OS...${Color_Off} \n\n"
         install_using_yum_or_dnf
     elif (cat /etc/os-release |grep 'ID="fedora"' || cat /etc/os-release |grep 'ID=fedora' &> /dev/null ); then
-        printf "\n${Yellow}INFO:  Detected Red Hat-based OS...${Color_Off} \n\n" 
+        printf "\n${Yellow}INFO:  Detected Red Hat-based OS...${Color_Off} \n\n"
         install_using_yum_or_dnf
     else
         printf "\n${Red}ERROR:  Unknown Release ID: $1 ${Color_Off}\n"
@@ -169,7 +169,7 @@ function detect_pkg_mgr_info () {
 
 
 function install_using_apt () {
-    printf "\n${Yellow}INFO:  Installing with apt...${Color_Off} \n\n" 
+    printf "\n${Yellow}INFO:  Installing with apt...${Color_Off} \n\n"
     S1_REPOSITORY_URL="deb.sentinelone.net"
     # ensure curl is installed before downloading signing keys
     if ! (which curl &> /dev/null); then
@@ -185,43 +185,45 @@ function install_using_apt () {
     # add public signature verification key for the repository to ensure the integrity and authenticity of packages
     # requires gpg, otherwise use fallback method below for bionic|buster
     if (which gpg &> /dev/null); then
-        curl -sL https://us-apt.pkg.dev/doc/repo-signing-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/sentinelone-repo-signing-key.gpg
-        curl -sL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/sentinelone-apt-key.gpg
+        set -x
+        curl -sL https://${S1_REPOSITORY_URL}/v1/gpg/package-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/sentinelone-package-key.gpg
+        curl -sL https://${S1_REPOSITORY_URL}/v1/gpg/repo-key.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/sentinelone-repo-key.gpg
+        set +x
     fi
     # remove any existing source lists for sentinelone
-    rm -f /etc/apt/sources.list.d/sentinelone-registry-ga.list
-    rm -f /etc/apt/sources.list.d/sentinelone-registry-ea.list
+    rm -f /etc/apt/sources.list.d/sentinelone-repository-ga.list
+    rm -f /etc/apt/sources.list.d/sentinelone-repository-ea.list
 
     if (cat /etc/os-release | grep -E "VERSION_CODENAME=(bionic|buster)" &> /dev/null ); then
-        printf "\n${Yellow}INFO:  Detected Bionic Beaver or Buster.  Using older GPG/Auth methods...${Color_Off} \n\n" 
+        printf "\n${Yellow}INFO:  Detected Bionic Beaver or Buster.  Using older GPG/Auth methods...${Color_Off} \n\n"
         # add public signature verification key for the repository to ensure the integrity and authenticity of packages
-        curl -sL https://us-apt.pkg.dev/doc/repo-signing-key.gpg | apt-key add - && curl -sL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+        curl -sL  https://${S1_REPOSITORY_URL}/v1/gpg/package-key.gpg | apt-key add - && curl -sL https://${S1_REPOSITORY_URL}/v1/gpg/repo-key.gpg | apt-key add -
         # add the GA repository to the list of sources
-        cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ga.list
+        cat <<- EOF > /etc/apt/sources.list.d/sentinelone-repository-ga.list
 deb [trusted=yes] https://${S1_REPOSITORY_USERNAME}:${S1_REPOSITORY_PASSWORD}@${S1_REPOSITORY_URL}/apt-ga apt-ga main
 EOF
         if ( echo $INCLUDE_EARLY_ACCESS_REPO | grep -E "([Tt]rue|[Yy]es|[Yy])" &> /dev/null ); then
             # add the EA repository to the list of sources (if INCLUDE_EARLY_ACCESS_REPO is set to true)
-            cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ea.list
+            cat <<- EOF > /etc/apt/sources.list.d/sentinelone-repository-ea.list
 deb [trusted=yes] https://${S1_REPOSITORY_USERNAME}:${S1_REPOSITORY_PASSWORD}@${S1_REPOSITORY_URL}/apt-ea apt-ea main
 EOF
         fi
     else
         # add the GA repository to the list of sources
-        cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ga.list
+        cat <<- EOF > /etc/apt/sources.list.d/sentinelone-repository-ga.list
 deb [trusted=yes] https://${S1_REPOSITORY_URL}/apt-ga apt-ga main
 EOF
         if ( echo $INCLUDE_EARLY_ACCESS_REPO | grep -E "([Tt]rue|[Yy]es|[Yy])" &> /dev/null ); then
             # add the EA repository to the list of sources (if INCLUDE_EARLY_ACCESS_REPO is set to true)
-            cat <<- EOF > /etc/apt/sources.list.d/sentinelone-registry-ea.list
+            cat <<- EOF > /etc/apt/sources.list.d/sentinelone-repository-ea.list
 deb [trusted=yes] https://${S1_REPOSITORY_URL}/apt-ea apt-ea main
 EOF
         fi
-        # add repo credentials to /etc/apt/auth.conf for the SentinelOne repo
-        cat <<- EOF >> /etc/apt/auth.conf
-    machine https://${S1_REPOSITORY_URL}
-    login ${S1_REPOSITORY_USERNAME}
-    password ${S1_REPOSITORY_PASSWORD}
+        # add repo credentials to /etc/apt/auth.conf.d for the SentinelOne repo
+        cat <<- EOF >> /etc/apt/auth.conf.d/sentinelone-repository.conf
+machine ${S1_REPOSITORY_URL}
+login ${S1_REPOSITORY_USERNAME}
+password ${S1_REPOSITORY_PASSWORD}
 EOF
     fi
     apt update
@@ -230,12 +232,12 @@ EOF
 
 
 function install_using_yum_or_dnf () {
-    printf "\n${Yellow}INFO:  Installing with yum or dnf...${Color_Off} \n\n" 
+    printf "\n${Yellow}INFO:  Installing with yum or dnf...${Color_Off} \n\n"
     S1_REPOSITORY_URL="rpm.sentinelone.net"
     # add public signature verification key for the repository to ensure the integrity and authenticity of packages
-    rpm --import https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    rpm --import https://${S1_REPOSITORY_URL}/v1/gpg/package-key.gpg
     # add the GA repository to the list of sources
-    cat <<- EOF > /etc/yum.repos.d/sentinelone-registry-ga.repo
+    cat <<- EOF > /etc/yum.repos.d/sentinelone-repository-ga.repo
 [yum-ga]
 name=yum-ga
 baseurl=https://${S1_REPOSITORY_URL}/yum-ga
@@ -247,7 +249,7 @@ password=${S1_REPOSITORY_PASSWORD}
 EOF
     # add the EA repository to the list of sources (if INCLUDE_EARLY_ACCESS_REPO is set to true)
     if ( echo $INCLUDE_EARLY_ACCESS_REPO | grep -E "([Tt]rue|[Yy]es|[Yy])" &> /dev/null ); then
-        cat <<- EOF > /etc/yum.repos.d/sentinelone-registry-ea.repo
+        cat <<- EOF > /etc/yum.repos.d/sentinelone-repository-ea.repo
 [yum-ea]
 name=yum-ea
 baseurl=https://${S1_REPOSITORY_URL}/yum-ea
