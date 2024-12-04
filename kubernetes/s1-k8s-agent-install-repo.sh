@@ -4,7 +4,7 @@
 # 
 # Usage:  sudo ./s1-k8s-agent-install-repo.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD S1_SITE_TOKEN S1_AGENT_TAG S1_AGENT_LOG_LEVEL K8S_TYPE
 # 
-# Version:  2024-07-22
+# Version:  2024-12-04
 #
 # Reference:  https://community.sentinelone.com/s/article/000008772
 #
@@ -32,7 +32,7 @@ White='\033[0;37m'        # White
 # S1_REPOSITORY_USERNAME=""
 # S1_REPOSITORY_PASSWORD=""
 # S1_SITE_TOKEN=""
-# S1_AGENT_TAG="24.1.2-ga"
+# S1_AGENT_TAG="24.2.2-ga"
 # S1_AGENT_LOG_LEVEL="info"
 # K8S_TYPE="k8s"
 
@@ -83,7 +83,7 @@ fi
 
 if [ -z $S1_AGENT_TAG ];then
     echo ""
-    read -p "Please enter the SentinelOne Agent Version to install (ie: 24.1.2-ga): " S1_AGENT_TAG
+    read -p "Please enter the SentinelOne Agent Version to install (ie: 24.2.2-ga): " S1_AGENT_TAG
 fi
 
 # If K8S_TYPE is set to openshift, autopilot, or fargate, we set special variables that are used to dynamically add helm flags during install
@@ -214,7 +214,7 @@ fi
 
 # Check if the value of S1_AGENT_TAG is in the right format
 if ! echo $S1_AGENT_TAG | egrep '^[0-9][0-9].[0-9].[0-9]-[ge]a$' &> /dev/null ; then
-    printf "\n${Red}ERROR:  The value passed for S1_AGENT_TAG is not in the correct format.  Examples of valid values are:  23.4.2-ga and 24.1.1-ea \n\n${Color_Off}"
+    printf "\n${Red}ERROR:  The value passed for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 24.2.2-ga,  23.4.2-ga, and 24.1.1-ea \n\n${Color_Off}"
     exit 1
 fi
 
