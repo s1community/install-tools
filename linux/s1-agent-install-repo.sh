@@ -236,30 +236,56 @@ function install_using_yum_or_dnf () {
     S1_REPOSITORY_URL="rpm.sentinelone.net"
     # add public signature verification key for the repository to ensure the integrity and authenticity of packages
     rpm --import https://${S1_REPOSITORY_URL}/v1/gpg/package-key.gpg
-    # add the GA repository to the list of sources
-    cat <<- EOF > /etc/yum.repos.d/sentinelone-repository-ga.repo
+    # Check if we're working with Amazon Linux 2.  If so, use a different auth format for the repos
+    if (grep -E '^PRETTY_NAME="Amazon Linux 2"$' /etc/os-release &> /dev/null ); then
+        printf "\n${Yellow}INFO:  Detected Amazon Linux 2.  Using older Auth methods...${Color_Off} \n\n"
+        # add the GA repository to the list of sources
+        cat <<- EOF > /etc/yum.repos.d/sentinelone-repository-ga.repo
 [yum-ga]
 name=yum-ga
-baseurl=https://${S1_REPOSITORY_URL}/yum-ga
+baseurl=https://${S1_REPOSITORY_USERNAME}:${S1_REPOSITORY_PASSWORD}@${S1_REPOSITORY_URL}/yum-ga
 enabled=1
 repo_gpgcheck=0
 gpgcheck=0
-username=${S1_REPOSITORY_USERNAME}
-password=${S1_REPOSITORY_PASSWORD}
 EOF
-    # add the EA repository to the list of sources (if INCLUDE_EARLY_ACCESS_REPO is set to true)
-    if ( echo $INCLUDE_EARLY_ACCESS_REPO | grep -E "([Tt]rue|[Yy]es|[Yy])" &> /dev/null ); then
-        cat <<- EOF > /etc/yum.repos.d/sentinelone-repository-ea.repo
+        if (echo $INCLUDE_EARLY_ACCESS_REPO | grep -E "([Tt]rue|[Yy]es|[Yy])" &> /dev/null ); then
+            # add the EA repository to the list of sources (if INCLUDE_EARLY_ACCESS_REPO is set to true)
+            cat <<- EOF > /etc/yum.repos.d/sentinelone-repository-ea.repo
 [yum-ea]
 name=yum-ea
-baseurl=https://${S1_REPOSITORY_URL}/yum-ea
+baseurl=https://${S1_REPOSITORY_USERNAME}:${S1_REPOSITORY_PASSWORD}@${S1_REPOSITORY_URL}/yum-ea
 enabled=1
 repo_gpgcheck=0
 gpgcheck=0
-username=${S1_REPOSITORY_USERNAME}
-password=${S1_REPOSITORY_PASSWORD}
 EOF
+        fi
+    else
+        # add the GA repository to the list of sources
+        cat <<- EOF > /etc/yum.repos.d/sentinelone-repository-ga.repo
+    [yum-ga]
+    name=yum-ga
+    baseurl=https://${S1_REPOSITORY_URL}/yum-ga
+    enabled=1
+    repo_gpgcheck=0
+    gpgcheck=0
+    username=${S1_REPOSITORY_USERNAME}
+    password=${S1_REPOSITORY_PASSWORD}
+EOF
+        # add the EA repository to the list of sources (if INCLUDE_EARLY_ACCESS_REPO is set to true)
+        if ( echo $INCLUDE_EARLY_ACCESS_REPO | grep -E "([Tt]rue|[Yy]es|[Yy])" &> /dev/null ); then
+            cat <<- EOF > /etc/yum.repos.d/sentinelone-repository-ea.repo
+    [yum-ea]
+    name=yum-ea
+    baseurl=https://${S1_REPOSITORY_URL}/yum-ea
+    enabled=1
+    repo_gpgcheck=0
+    gpgcheck=0
+    username=${S1_REPOSITORY_USERNAME}
+    password=${S1_REPOSITORY_PASSWORD}
+EOF
+        fi
     fi
+
     # Check if dnf is available, if not.. use yum.
     if (which dnf &> /dev/null); then
             dnf makecache
@@ -268,6 +294,7 @@ EOF
             yum makecache
             yum install -y SentinelAgent-${S1_AGENT_VERSION}-1.${OS_ARCH}
     fi
+
 }
 
 ################################################################################
