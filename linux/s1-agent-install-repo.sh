@@ -262,26 +262,26 @@ EOF
     else
         # add the GA repository to the list of sources
         cat <<- EOF > /etc/yum.repos.d/sentinelone-repository-ga.repo
-    [yum-ga]
-    name=yum-ga
-    baseurl=https://${S1_REPOSITORY_URL}/yum-ga
-    enabled=1
-    repo_gpgcheck=0
-    gpgcheck=0
-    username=${S1_REPOSITORY_USERNAME}
-    password=${S1_REPOSITORY_PASSWORD}
+[yum-ga]
+name=yum-ga
+baseurl=https://${S1_REPOSITORY_URL}/yum-ga
+enabled=1
+repo_gpgcheck=0
+gpgcheck=0
+username=${S1_REPOSITORY_USERNAME}
+password=${S1_REPOSITORY_PASSWORD}
 EOF
         # add the EA repository to the list of sources (if INCLUDE_EARLY_ACCESS_REPO is set to true)
         if ( echo $INCLUDE_EARLY_ACCESS_REPO | grep -E "([Tt]rue|[Yy]es|[Yy])" &> /dev/null ); then
             cat <<- EOF > /etc/yum.repos.d/sentinelone-repository-ea.repo
-    [yum-ea]
-    name=yum-ea
-    baseurl=https://${S1_REPOSITORY_URL}/yum-ea
-    enabled=1
-    repo_gpgcheck=0
-    gpgcheck=0
-    username=${S1_REPOSITORY_USERNAME}
-    password=${S1_REPOSITORY_PASSWORD}
+[yum-ea]
+name=yum-ea
+baseurl=https://${S1_REPOSITORY_URL}/yum-ea
+enabled=1
+repo_gpgcheck=0
+gpgcheck=0
+username=${S1_REPOSITORY_USERNAME}
+password=${S1_REPOSITORY_PASSWORD}
 EOF
         fi
     fi
