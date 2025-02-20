@@ -12,7 +12,7 @@
 # Usage:  ./s1-pull-private-push.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD S1_AGENT_TAG \
 #           PRIVATE_REPO_BASE PRIVATE_REPO_AGENT_NAME PRIVATE_REPO_HELPER_NAME
 # 
-# Version:  1.0
+# Version:  2025.02.20
 #
 # Reference:  https://community.sentinelone.com/s/article/000008772
 #
@@ -139,7 +139,7 @@ fi
 
 # Check if the value of S1_AGENT_TAG is in the right format
 if ! echo $S1_AGENT_TAG | grep -E '^[[:digit:]][[:digit:]]\.[[:digit:]]\.[[:digit:]]-[ge]a$' &> /dev/null ; then
-    printf "\n${Red}ERROR:  The value passed for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 24.3.3-ga,  24.2.2-ga, 23.4.2-ga, and 24.1.1-ea \n\n${Color_Off}"
+    printf "\n${Red}ERROR:  The value passed for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 24.3.3-ga, 24.2.2-ga, 23.4.2-ga, and 24.1.1-ea \n\n${Color_Off}"
     exit 1
 fi
 
