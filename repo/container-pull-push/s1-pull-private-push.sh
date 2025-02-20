@@ -88,7 +88,7 @@ fi
 
 if [ -z $S1_AGENT_TAG ];then
     echo ""
-    read -p "Please enter the SentinelOne Agent Version Tag to install (ie: 23.4.2-ga): " S1_AGENT_TAG
+    read -p "Please enter the SentinelOne Agent Version Tag to install (ie: 24.3.3-ga): " S1_AGENT_TAG
 fi
 
 if [ -z $PRIVATE_REPO_BASE ];then
@@ -139,7 +139,7 @@ fi
 
 # Check if the value of S1_AGENT_TAG is in the right format
 if ! echo $S1_AGENT_TAG | grep -E '^[[:digit:]][[:digit:]]\.[[:digit:]]\.[[:digit:]]-[ge]a$' &> /dev/null ; then
-    printf "\n${Red}ERROR:  The value passed for S1_AGENT_TAG is not in the correct format.  Examples of valid values are:  23.3.2-ga and 23.4.1-ea \n\n${Color_Off}"
+    printf "\n${Red}ERROR:  The value passed for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 24.3.3-ga,  24.2.2-ga, 23.4.2-ga, and 24.1.1-ea \n\n${Color_Off}"
     exit 1
 fi
 
