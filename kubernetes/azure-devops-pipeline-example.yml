@@ -19,7 +19,7 @@ variables:
 
 # The following variable values can be customized as you see fit (or can be left as is).
 - name: S1_AGENT_TAG
-  value: '24.1.2-ga'
+  value: '24.3.3-ga'
 - name: S1_HELPER_TAG
   value: $(S1_AGENT_TAG)
 - name: REPO_BASE
