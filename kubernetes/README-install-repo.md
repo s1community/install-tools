@@ -7,6 +7,8 @@ A helper script to automate the installation, association to a site and activati
 ## Usage
 
 ```
+curl -sLO https://raw.githubusercontent.com/s1community/install-tools/refs/heads/main/kubernetes/s1-k8s-agent-install-repo.sh
+chmod +x s1-k8s-agent-install-repo.sh
 ./s1-k8s-agent-install-repo.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD S1_SITE_TOKEN S1_AGENT_TAG S1_AGENT_LOG_LEVEL K8S_TYPE
 ```
 | Argument | Explanation | Required |
