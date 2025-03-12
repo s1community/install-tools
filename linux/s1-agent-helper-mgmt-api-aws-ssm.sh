@@ -60,9 +60,9 @@ if ! [[ ${#SITE_TOKEN} -gt 90 ]]; then
     exit 1
 fi
 
-# Check if the API_KEY is in the right format
-if ! [[ ${#API_KEY} -gt 79 ]]; then
-    printf "\n${Red}ERROR:  Invalid format for API_KEY: $API_KEY ${Color_Off}\n"
+# Check if the API_TOKEN is in the right format
+if ! [[ ${#API_TOKEN} -gt 79 ]]; then
+    printf "\n${Red}ERROR:  Invalid format for API_TOKEN: $API_TOKEN ${Color_Off}\n"
     echo "API Keys are generally 80 to 430 characters long and are alphanumeric."
     echo ""
     exit 1
