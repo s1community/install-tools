@@ -4,7 +4,6 @@
 #
 # Pre-requisites: 
 # - EC2 instances must have IAM permissions to access Systems Manager (ie: AmazonEC2RoleforSSM)
-# - aws-cli installed
 #
 # Version:  1.1
 #
@@ -13,7 +12,7 @@
 
 
 # NOTE:  This version will install the latest EA or GA version of the SentinelOne Linux agent
-# NOTE:  This script will install the curl and jq utilities if not already installed.
+# NOTE:  This script will install the aws-cli, curl and jq utilities if not already installed.
 
 # References:
 # - https://docs.aws.amazon.com/systems-manager/latest/userguide/integration-s3.html
