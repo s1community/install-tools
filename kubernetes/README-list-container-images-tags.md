@@ -1,6 +1,6 @@
 
 # s1-k8s-public-registry-list-container-images-tags.sh
-A helper script to list the available SentinelOne Kubernetes CWS Container agent and helper images (GA and EA tags) from the SentinelOne [Artifact Repository](https://community.sentinelone.com/s/article/000008771).
+A helper script to list the available SentinelOne CWS Container agent and helper images (GA and EA tags) from the SentinelOne [Artifact Repository](https://community.sentinelone.com/s/article/000008771).
 
 ## Detailed Description
 

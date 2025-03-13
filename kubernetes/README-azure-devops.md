@@ -1,6 +1,6 @@
 # azure-devops-pipeline-example.yml
 
-A sample pipeline for use in [Azure DevOps](https://azure.microsoft.com/en-us/products/devops/pipelines) to deploy the SentinelOne Kubernetes agent to an existing EKS cluster.
+A sample pipeline for use in [Azure DevOps](https://azure.microsoft.com/en-us/products/devops/pipelines) to deploy the SentinelOne CWS Container agent to an existing EKS cluster.
 
 ## Prerequisites
 
