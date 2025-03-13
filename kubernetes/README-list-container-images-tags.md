@@ -9,7 +9,7 @@ A helper script to list the available SentinelOne CWS Container agent and helper
 ```
 curl -sLO https://raw.githubusercontent.com/s1community/install-tools/refs/heads/main/kubernetes/s1-k8s-list-container-images-tags.sh
 chmod +x s1-k8s-list-container-images-tags.sh
-sudo ./s1-k8s-list-container-images-tags.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD
+./s1-k8s-list-container-images-tags.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD
 ```
 | Argument | Explanation | Required |
 | -------- | ----------- | -------- |
