@@ -1,6 +1,6 @@
 #!/bin/bash
 ##############################################################################################################
-# Description:  Bash script to aid with automating S1 Kubernetes Agent install
+# Description:  Bash script to aid with automating SentinelOne CWS Container agent install
 # 
 # Usage:  sudo ./s1-k8s-agent-install-repo.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD S1_SITE_TOKEN S1_AGENT_TAG S1_AGENT_LOG_LEVEL K8S_TYPE
 # 
