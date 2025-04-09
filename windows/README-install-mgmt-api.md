@@ -6,7 +6,7 @@ This script can be downloaded and executed manually or via script.
 
 Note: The concept of this script could easily be modified for usage within configuration management tools (Ansible, Chef, Puppet, etc.)
 
-For more information, please refer to [Installing the Windows Agent](https://community.sentinelone.com/s/article/000005515)
+For more information, please refer to [Installing the Windows Agent](https://community.sentinelone.com/s/article/000005521)
 
 # Prerequisites
 
