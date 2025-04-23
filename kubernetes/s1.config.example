@@ -14,3 +14,15 @@ S1_AGENT_LOG_LEVEL="info"
 
 # set to one of [ k8s | openshift | autopilot | fargate ]
 K8S_TYPE="k8s"
+
+# set to manually specifiy the cluster name in the console.
+# Cluster name will be dynamically retrieved from these labels if set:
+# AWS EKS: alpha.eksctl.io/cluster-name
+# Azure AKS: kubernetes.azure.com/cluster
+CLUSTER_NAME=""
+
+# set for EKS / AKS / GKE
+# AWS EKS: Cluster ARN for EKS
+# Azure AKS: Cluster Resource ID
+# Google GCP: Cluster ID
+CLUSTER_UID=""
