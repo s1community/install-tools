@@ -37,8 +37,8 @@ White='\033[0;37m'        # White
 # S1_AGENT_TAG="24.3.3-ga"
 # S1_AGENT_LOG_LEVEL="info"
 # K8S_TYPE="k8s"
-# # The value of the CLUSTER_UID will be a Cluster ARN for EKS, a Resource ID for AKS and a Cluster ID for GKE.
-# # If deploying to a non-cloud-based kubernetes service, leave this variable blank.
+# The value of the CLUSTER_UID will be a Cluster ARN for EKS, a Resource ID for AKS and a Cluster ID for GKE.
+# If deploying to a non-cloud-based kubernetes service, leave this variable blank.
 # CLUSTER_UID=""
 # CLUSTER_NAME=""
 
