@@ -14,7 +14,7 @@ You must have `curl` installed on your target Linux host
 # Manual Usage
 1. Download the 's1-agent-install-mgmt-api.sh' script
 ```
-curl -o s1-agent-install-mgmt-api.sh  https://raw.githubusercontent.com/s1community/install-tools/refs/heads/main/linux/README-install-mgmt-api.md
+curl -o s1-agent-install-mgmt-api.sh https://raw.githubusercontent.com/s1community/install-tools/refs/heads/main/linux/s1-agent-install-mgmt-api.sh
 ```
 2. Make it executeable
 ```
