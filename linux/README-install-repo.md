@@ -7,5 +7,5 @@ A helper script to automate the download, installation, association to a site an
 ## Usage
 
 ```
-sudo ./s1-agent-install-repo.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD S1_SITE_TOKEN S1_AGENT_VERSION
+curl -sLO https://raw.githubusercontent.com/s1community/install-tools/refs/heads/main/linux/s1-agent-install-repo.sh; chmod +x s1-agent-install-repo.sh; sudo ./s1-agent-install-repo.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD S1_SITE_TOKEN S1_AGENT_VERSION
 ```
