@@ -16,6 +16,6 @@ chmod +x s1-k8s-agent-install-repo.sh
 | S1_REPOSITORY_USERNAME | Your private registry username | Yes |
 | S1_REPOSITORY_PASSWORD | Your private registry password | Yes |
 | S1_SITE_TOKEN | Your SentinelOne Site Token | Yes |
-| S1_AGENT_TAG | The version/tag of the K8s agent. ie: 25.1.2-ga | Yes |
+| S1_AGENT_TAG | The version/tag of the K8s agent. ie: 25.1.3-ga | Yes |
 | S1_AGENT_LOG_LEVEL | Your private registry password. ie: info (default), debug | No |
 | K8S_TYPE | The target K8s type.  ie: k8s (default), openshift, autopilot, fargate | No |
