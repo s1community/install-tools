@@ -7,7 +7,7 @@ S1_REPOSITORY_PASSWORD=""
 # Getting a Site or Group Token: https://community.sentinelone.com/s/article/000004904
 S1_SITE_TOKEN=""
 
-S1_AGENT_TAG="25.1.2-ga"
+S1_AGENT_TAG="25.1.3-ga"
 
 # set to either [ info | debug ]
 S1_AGENT_LOG_LEVEL="info"

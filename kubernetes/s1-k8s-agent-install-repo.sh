@@ -32,7 +32,7 @@ White='\033[0;37m'        # White
 # S1_REPOSITORY_USERNAME=""
 # S1_REPOSITORY_PASSWORD=""
 # S1_SITE_TOKEN=""
-# S1_AGENT_TAG="25.1.2-ga"
+# S1_AGENT_TAG="25.1.3-ga"
 # S1_AGENT_LOG_LEVEL="info"
 # K8S_TYPE="k8s"
 
@@ -83,7 +83,7 @@ fi
 
 if [ -z $S1_AGENT_TAG ];then
     echo ""
-    read -p "Please enter the SentinelOne Agent Version to install (ie: 25.1.2-ga): " S1_AGENT_TAG
+    read -p "Please enter the SentinelOne Agent Version to install (ie: 25.1.3-ga): " S1_AGENT_TAG
 fi
 
 # If K8S_TYPE is set to openshift, autopilot, or fargate, we set special variables that are used to dynamically add helm flags during install
@@ -110,7 +110,7 @@ esac
 
 # We derive the helm release/chart version from the SentinelOne Agent version/tag + set the s1helper tag to be the same as the s1agent tag.
 # This requires removing the [-ea|-ga] designator from the S1_AGENT_TAG
-HELM_RELEASE_VERSION=$(echo $S1_AGENT_TAG | cut -d "-" -f1) # ie: 25.1.2
+HELM_RELEASE_VERSION=$(echo $S1_AGENT_TAG | cut -d "-" -f1) # ie: 25.1.3
 S1_HELPER_TAG=$S1_AGENT_TAG
 
 # Get cluster name from the current context
@@ -175,7 +175,7 @@ fi
 # if [ $# -lt 4 ]; then
 #     printf "\n${Red}ERROR:  Expecting at least 4 arguments to be passed. \n${Color_Off}"
 #     printf "Example usage: \n"
-#     printf "ie:${Green}  $0 \$S1_SITE_TOKEN \$S1_REPOSITORY_USERNAME \$S1_REPOSITORY_PASSWORD 25.1.2-ga debug \n${Color_Off}"
+#     printf "ie:${Green}  $0 \$S1_SITE_TOKEN \$S1_REPOSITORY_USERNAME \$S1_REPOSITORY_PASSWORD 25.1.3-ga debug \n${Color_Off}"
 #     printf "\nFor instructions on obtaining a ${Purple}Site Token${Color_Off} from the SentinelOne management console, please see the following KB article:\n"
 #     printf "    ${Blue}https://community.sentinelone.com/s/article/000004904 ${Color_Off} \n\n"
 #     printf "\nFor instructions on obtaining ${Purple}Registry Credentials${Color_Off} from the SentinelOne management console, please see the following KB article:\n"
@@ -214,7 +214,7 @@ fi
 
 # Check if the value of S1_AGENT_TAG is in the right format
 if ! echo $S1_AGENT_TAG | egrep '^[0-9][0-9].[0-9].[0-9]-[ge]a$' &> /dev/null ; then
-    printf "\n${Red}ERROR:  The value passed for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 25.1.2-ga, 24.3.3-ga, 24.2.2-ga, and 25.1.1-ea \n\n${Color_Off}"
+    printf "\n${Red}ERROR:  The value passed for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 25.1.3-ga, 24.3.3-ga, 24.2.2-ga, and 25.1.1-ea \n\n${Color_Off}"
     exit 1
 fi
 
