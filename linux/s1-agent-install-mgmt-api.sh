@@ -128,7 +128,7 @@ function check_api_response () {
 
 
 function find_agent_info_by_architecture () {
-    OS_ARCH=$(uname -p)
+    OS_ARCH=$(uname -m)
     if [[ $OS_ARCH == "aarch64" ]]; then
         for i in {0..20}; do
             FN=$(cat response.txt | jq -r ".data[$i].fileName")
