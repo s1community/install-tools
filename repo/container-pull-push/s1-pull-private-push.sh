@@ -240,7 +240,7 @@ docker push ${PRIVATE_REPO_AGENT}:${S1_AGENT_TAG_x86_64}
 docker push ${PRIVATE_REPO_AGENT}:${S1_AGENT_TAG_aarch64}
 
 # Push helper images
-printf "\n${Yellow}INFO:  Pushinbg helper images to private repository ${PRIVATE_REPO_HELPER} \n\n${Color_Off}"
+printf "\n${Yellow}INFO:  Pushing helper images to private repository ${PRIVATE_REPO_HELPER} \n\n${Color_Off}"
 docker push ${PRIVATE_REPO_HELPER}:${S1_HELPER_TAG_x86_64}
 docker push ${PRIVATE_REPO_HELPER}:${S1_HELPER_TAG_aarch64}
 
