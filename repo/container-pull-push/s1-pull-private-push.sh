@@ -12,9 +12,9 @@
 # Usage:  ./s1-pull-private-push.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD S1_AGENT_TAG \
 #           PRIVATE_REPO_BASE PRIVATE_REPO_AGENT_NAME PRIVATE_REPO_HELPER_NAME
 # 
-# Version:  2025.02.20
+# Version:  2025.12.10
 #
-# Reference:  https://community.sentinelone.com/s/article/000008772
+# Reference:  https://community.sentinelone.com/s/article/000011808
 #
 # NOTE: Log into your private registry before running this script.  If you do not log into the 
 #       docker cli, the push will fail.
@@ -88,7 +88,7 @@ fi
 
 if [ -z $S1_AGENT_TAG ];then
     echo ""
-    read -p "Please enter the SentinelOne Agent Version Tag to install (ie: 25.2.2-ga): " S1_AGENT_TAG
+    read -p "Please enter the SentinelOne Agent Version Tag to install (ie: 25.3.2-ga): " S1_AGENT_TAG
 fi
 
 if [ -z $PRIVATE_REPO_BASE ];then
@@ -139,7 +139,7 @@ fi
 
 # Check if the value of S1_AGENT_TAG is in the right format
 if ! echo $S1_AGENT_TAG | grep -E '^[[:digit:]][[:digit:]]\.[[:digit:]]\.[[:digit:]]-[ge]a$' &> /dev/null ; then
-    printf "\n${Red}ERROR:  The value passed for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 25.2.2-ga, 25.1.3-ga, 24.3.3-ga, and 24.2.2-ga \n\n${Color_Off}"
+    printf "\n${Red}ERROR:  The value passed for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 25.3.2-ga, 25.2.2-ga, 25.1.3-ga, and 24.3.3-ga \n\n${Color_Off}"
     exit 1
 fi
 
