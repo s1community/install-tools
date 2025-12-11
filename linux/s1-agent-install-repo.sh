@@ -6,7 +6,7 @@
 #
 # Notes: This script will install the curl utility on ubuntu / debian systems if not already installed.
 #
-# Version:  2025.02.20
+# Version:  2025.12.10
 ##############################################################################################################
 
 
@@ -30,7 +30,7 @@ White='\033[0;37m'        # White
 # S1_REPOSITORY_USERNAME=""
 # S1_REPOSITORY_PASSWORD=""
 # S1_SITE_TOKEN=""
-# S1_AGENT_VERSION="25.2.2"
+# S1_AGENT_VERSION="25.3.2"
 # INCLUDE_EARLY_ACCESS_REPO="true"
 
 
