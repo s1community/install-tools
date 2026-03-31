@@ -15,5 +15,5 @@ S1_AGENT_LOG_LEVEL="info"
 # set to either [ true | false ]
 S1_ADMISSION_CONTROLLER="false"
 
-# set to one of [ k8s | openshift | autopilot | fargate ]
+# set to one of [ k8s | openshift | autopilot | fargate | eksauto ]
 K8S_TYPE="k8s"

@@ -108,6 +108,11 @@ case $K8S_TYPE in
   FARGATE='true'
   echo "fargate"
   ;;
+
+  eksauto)
+  EKSAUTO='true'
+  echo "eksauto"
+  ;;
 esac
 
 # We derive the helm release/chart version from the SentinelOne Agent version/tag + set the s1helper tag to be the same as the s1agent tag.
@@ -310,6 +315,7 @@ helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --versio
     ${OPENSHIFT:+--set configuration.platform.type=openshift} \
     ${AUTOPILOT:+--set configuration.platform.gke.autopilot=true} \
     ${FARGATE:+--set configuration.env.injection.enabled=true --set helper.labels.Application=sentinelone --set configuration.env.agent.pod_uid=0 --set configuration.env.agent.pod_gid=0} \
+    ${EKSAUTO:+--set --set configuration.platform.type=bottlerocket} \
     sentinelone/s1-agent
 
 
