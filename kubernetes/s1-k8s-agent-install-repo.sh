@@ -4,9 +4,10 @@
 # 
 # Usage:  sudo ./s1-k8s-agent-install-repo.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD S1_SITE_TOKEN S1_AGENT_TAG S1_AGENT_LOG_LEVEL K8S_TYPE
 # 
-# Version:  2025.12.10
+# Version:  2026.03.30
 #
-# Reference:  https://community.sentinelone.com/s/article/000011808
+# Create Repo Username/Password:  https://community.sentinelone.com/s/article/000011808
+# 
 #
 # NOTE: Please be aware that there is a 100 pulls/hour rate limit for the SentinelOne repository!!
 ##############################################################################################################
@@ -121,6 +122,7 @@ printf "\n${Purple}Cluster Name:  $CLUSTER_NAME\n${Color_Off}"
 S1_PULL_SECRET_NAME=sentinelone-registry
 HELM_RELEASE_NAME=sentinelone
 S1_NAMESPACE=sentinelone
+S1_ALLOWLIST=s1-agent-allowlist-synchronizer.yaml
 # Resource Limits and Requests for Agent
 # GKE Autopilot may override these based on bursting availability in your clusters
 # https://cloud.google.com/kubernetes-engine/docs/concepts/autopilot-resource-requests
@@ -260,6 +262,22 @@ fi
 printf "\n${Purple}Running helm repo update...\n${Color_Off}"
 helm repo update
 
+# Create and apply AllowlistSynchronizer for GKE Autopilot
+# https://community.sentinelone.com/s/article/000011984
+if [ "${AUTOPILOT}" = "true" ]; then 
+    cat << 'EOF' > ${S1_ALLOWLIST}
+apiVersion: auto.gke.io/v1
+kind: AllowlistSynchronizer
+metadata:
+  name: s1-agent-allowlist-synchronizer
+spec:
+  allowlistPaths:
+    - SentinelOne/s1-agent/*
+EOF
+
+    kubectl apply -f ${S1_ALLOWLIST}
+fi
+
 # Deploy S1 agent!  Upgrade it if it already exists
 printf "\n${Purple}Deploying Helm Chart...\n${Color_Off}"
 helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --version ${HELM_RELEASE_VERSION} \
@@ -296,5 +314,5 @@ helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --versio
 
 # Check the status of the pods
 printf "\n${Purple}Running: kubectl wait --for=condition=ready --timeout=60s pod -n $S1_NAMESPACE -l app=s1-agent\n${Color_Off}"
-printf "\n${Purple}This should take less than 60 seconds...\n${Color_Off}"
+printf "\n${Purple}This should take less than 60 seconds in most cases...\n${Color_Off}"
 kubectl wait --for=condition=ready pod -n $S1_NAMESPACE -l app=s1-agent
