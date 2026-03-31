@@ -35,6 +35,7 @@ White='\033[0;37m'        # White
 # S1_SITE_TOKEN=""
 # S1_AGENT_TAG="25.3.2-ga"
 # S1_AGENT_LOG_LEVEL="info"
+# S1_ADMISSION_CONTROLLER="true"
 # K8S_TYPE="k8s"
 
 # Check for s1.config file.  If it exists, source it.
@@ -290,6 +291,10 @@ helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --versio
     --set configuration.cluster.name=$CLUSTER_NAME \
     --set helper.nodeSelector."kubernetes\\.io/os"=linux \
     --set agent.nodeSelector."kubernetes\\.io/os"=linux \
+    --set configuration.env.admission_controllers.validating.enabled=${S1_ADMISSION_CONTROLLER} \
+    --set configuration.env.helper.inventory_enabled=true \
+    --set configuration.env.helper.communicator_enabled=true \
+    --set configuration.inventory_only=false \
     --set helper.resources.limits.memory=${S1_HELPER_LIMITS_MEMORY} \
     --set helper.resources.limits.cpu=${S1_HELPER_LIMITS_CPU} \
     --set helper.resources.requests.memory=${S1_HELPER_REQUESTS_MEMORY} \
