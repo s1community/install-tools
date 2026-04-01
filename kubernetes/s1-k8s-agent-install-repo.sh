@@ -6,7 +6,8 @@
 # 
 # Version:  2026.04.01
 #
-# Reference:  https://community.sentinelone.com/s/article/000011808
+# Create Repo Username/Password:  https://community.sentinelone.com/s/article/000011808
+# 
 #
 # NOTE: Please be aware that there is a 100 pulls/hour rate limit for the SentinelOne repository!!
 ##############################################################################################################
@@ -34,6 +35,7 @@ White='\033[0;37m'        # White
 # S1_SITE_TOKEN=""
 # S1_AGENT_TAG="25.4.2-ga"
 # S1_AGENT_LOG_LEVEL="info"
+# S1_ADMISSION_CONTROLLER="false"
 # K8S_TYPE="k8s"
 
 # Check for s1.config file.  If it exists, source it.
@@ -61,6 +63,9 @@ if [ $# -eq 0 ]; then
     S1_AGENT_LOG_LEVEL="info"
     if [ -z ${K8S_TYPE} ]; then 
         K8S_TYPE="k8s"
+    fi
+    if [ -z ${S1_ADMISSION_CONTROLLER} ]; then
+        S1_ADMISSION_CONTROLLER="false"
     fi
 fi
 
@@ -106,6 +111,11 @@ case $K8S_TYPE in
   FARGATE='true'
   echo "fargate"
   ;;
+
+  eksauto)
+  EKSAUTO='true'
+  echo "eksauto"
+  ;;
 esac
 
 # We derive the helm release/chart version from the SentinelOne Agent version/tag + set the s1helper tag to be the same as the s1agent tag.
@@ -121,6 +131,7 @@ printf "\n${Purple}Cluster Name:  $CLUSTER_NAME\n${Color_Off}"
 S1_PULL_SECRET_NAME=sentinelone-registry
 HELM_RELEASE_NAME=sentinelone
 S1_NAMESPACE=sentinelone
+S1_ALLOWLIST=s1-agent-allowlist-synchronizer.yaml
 # Resource Limits and Requests for Agent
 # GKE Autopilot may override these based on bursting availability in your clusters
 # https://cloud.google.com/kubernetes-engine/docs/concepts/autopilot-resource-requests
@@ -260,6 +271,22 @@ fi
 printf "\n${Purple}Running helm repo update...\n${Color_Off}"
 helm repo update
 
+# Create and apply AllowlistSynchronizer for GKE Autopilot
+# https://community.sentinelone.com/s/article/000011984
+if [ "${AUTOPILOT}" = "true" ]; then 
+    printf "\n${Purple}Deploying AllowlistSychronizer for GKE Autopilot...\n${Color_Off}"
+    cat << 'EOF' > ${S1_ALLOWLIST}
+apiVersion: auto.gke.io/v1
+kind: AllowlistSynchronizer
+metadata:
+  name: s1-agent-allowlist-synchronizer
+spec:
+  allowlistPaths:
+    - SentinelOne/s1-agent/*
+EOF
+    kubectl apply -f ${S1_ALLOWLIST}
+fi
+
 # Deploy S1 agent!  Upgrade it if it already exists
 printf "\n${Purple}Deploying Helm Chart...\n${Color_Off}"
 helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --version ${HELM_RELEASE_VERSION} \
@@ -272,6 +299,10 @@ helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --versio
     --set configuration.cluster.name=$CLUSTER_NAME \
     --set helper.nodeSelector."kubernetes\\.io/os"=linux \
     --set agent.nodeSelector."kubernetes\\.io/os"=linux \
+    --set configuration.env.admission_controllers.validating.enabled=${S1_ADMISSION_CONTROLLER} \
+    --set configuration.env.helper.inventory_enabled=true \
+    --set configuration.env.helper.communicator_enabled=true \
+    --set configuration.inventory_only=false \
     --set helper.resources.limits.memory=${S1_HELPER_LIMITS_MEMORY} \
     --set helper.resources.limits.cpu=${S1_HELPER_LIMITS_CPU} \
     --set helper.resources.requests.memory=${S1_HELPER_REQUESTS_MEMORY} \
@@ -287,6 +318,7 @@ helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --versio
     ${OPENSHIFT:+--set configuration.platform.type=openshift} \
     ${AUTOPILOT:+--set configuration.platform.gke.autopilot=true} \
     ${FARGATE:+--set configuration.env.injection.enabled=true --set helper.labels.Application=sentinelone --set configuration.env.agent.pod_uid=0 --set configuration.env.agent.pod_gid=0} \
+    ${EKSAUTO:+--set --set configuration.platform.type=bottlerocket} \
     sentinelone/s1-agent
 
 
@@ -296,5 +328,5 @@ helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --versio
 
 # Check the status of the pods
 printf "\n${Purple}Running: kubectl wait --for=condition=ready --timeout=60s pod -n $S1_NAMESPACE -l app=s1-agent\n${Color_Off}"
-printf "\n${Purple}This should take less than 60 seconds...\n${Color_Off}"
+printf "\n${Purple}This should take less than 60 seconds in most cases...\n${Color_Off}"
 kubectl wait --for=condition=ready pod -n $S1_NAMESPACE -l app=s1-agent
