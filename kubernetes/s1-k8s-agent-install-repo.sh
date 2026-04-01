@@ -35,7 +35,7 @@ White='\033[0;37m'        # White
 # S1_SITE_TOKEN=""
 # S1_AGENT_TAG="25.3.2-ga"
 # S1_AGENT_LOG_LEVEL="info"
-# S1_ADMISSION_CONTROLLER="true"
+# S1_ADMISSION_CONTROLLER="false"
 # K8S_TYPE="k8s"
 
 # Check for s1.config file.  If it exists, source it.
@@ -63,6 +63,9 @@ if [ $# -eq 0 ]; then
     S1_AGENT_LOG_LEVEL="info"
     if [ -z ${K8S_TYPE} ]; then 
         K8S_TYPE="k8s"
+    fi
+    if [ -z ${S1_ADMISSION_CONTROLLER} ]; then
+        S1_ADMISSION_CONTROLLER="false"
     fi
 fi
 
@@ -271,6 +274,7 @@ helm repo update
 # Create and apply AllowlistSynchronizer for GKE Autopilot
 # https://community.sentinelone.com/s/article/000011984
 if [ "${AUTOPILOT}" = "true" ]; then 
+    printf "\n${Purple}Deploying AllowlistSychronizer for GKE Autopilot...\n${Color_Off}"
     cat << 'EOF' > ${S1_ALLOWLIST}
 apiVersion: auto.gke.io/v1
 kind: AllowlistSynchronizer
@@ -280,7 +284,6 @@ spec:
   allowlistPaths:
     - SentinelOne/s1-agent/*
 EOF
-
     kubectl apply -f ${S1_ALLOWLIST}
 fi
 
