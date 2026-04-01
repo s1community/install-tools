@@ -6,7 +6,7 @@
 #
 # Notes: This script will install the curl utility on ubuntu / debian systems if not already installed.
 #
-# Version:  2025.12.10
+# Version:  2026.04.01
 ##############################################################################################################
 
 
