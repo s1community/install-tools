@@ -2,8 +2,7 @@
 
 ##  s1-pull-private-push.sh
 
-This script will download container images from the SentinelOne Repository and push them 
-to your private registry.
+This script will download container images from the SentinelOne Repository and push them to your private registry.
 
 https://community.sentinelone.com/s/article/000011808
 
