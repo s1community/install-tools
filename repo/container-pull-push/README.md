@@ -5,7 +5,7 @@
 This script will download container images from the SentinelOne Repository and push them 
 to your private registry.
 
-https://community.sentinelone.com/s/article/000008771
+https://community.sentinelone.com/s/article/000011808
 
 
 ### Prerequisites
