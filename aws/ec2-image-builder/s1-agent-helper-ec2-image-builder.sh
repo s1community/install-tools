@@ -31,6 +31,7 @@ PACKAGE_MANAGER=''
 AGENT_INSTALL_SYNTAX=''
 AGENT_FILE_NAME=''
 AGENT_DOWNLOAD_LINK=''
+AGENT_FILE_SHA1=''
 VERSION_COMPARE_RESULT=''
 
 
@@ -207,6 +208,7 @@ function find_agent_info_by_architecture () {
             if [[ $FN == *$OS_ARCH* ]]; then
                 AGENT_FILE_NAME=$(cat response.txt | jq -r ".data[$i].fileName")
                 AGENT_DOWNLOAD_LINK=$(cat response.txt | jq -r ".data[$i].link")
+                AGENT_FILE_SHA1=$(cat response.txt | jq -r ".data[$i].sha1")
                 break
             fi
         done
@@ -216,6 +218,7 @@ function find_agent_info_by_architecture () {
             if [[ $FN != *"aarch"* ]]; then
                 AGENT_FILE_NAME=$(cat response.txt | jq -r ".data[$i].fileName")
                 AGENT_DOWNLOAD_LINK=$(cat response.txt | jq -r ".data[$i].link")
+                AGENT_FILE_SHA1=$(cat response.txt | jq -r ".data[$i].sha1")
                 break
             fi
         done
@@ -231,6 +234,55 @@ function find_agent_info_by_architecture () {
 }
 
 
+# Validate agent metadata returned by the management API before using it as a
+# path component or shell argument.  Without these checks, a tampered API
+# response could traverse out of /tmp, inject curl flags, or pass an option
+# through to dpkg/rpm.
+function validate_agent_info () {
+    # File name must be a plain basename, no path separators or parent refs,
+    # and must end in .deb or .rpm.
+    if [[ "$AGENT_FILE_NAME" != "$(basename -- "$AGENT_FILE_NAME")" ]] \
+        || [[ "$AGENT_FILE_NAME" == *".."* ]] \
+        || ! [[ "$AGENT_FILE_NAME" =~ ^[A-Za-z0-9._-]+\.(deb|rpm)$ ]]; then
+        printf "\nERROR:  Refusing to use untrusted agent file name returned by API: %s\n" "$AGENT_FILE_NAME"
+        exit 1
+    fi
+
+    # Download URL must be HTTPS so a tampered API response cannot redirect to
+    # a non-TLS or non-HTTP scheme (file:, javascript:, etc.).  The host is not
+    # restricted because SentinelOne may serve packages from a CDN; integrity
+    # is enforced via the SHA1 check below instead.
+    if ! [[ "$AGENT_DOWNLOAD_LINK" =~ ^https://[^[:space:]]+$ ]]; then
+        printf "\nERROR:  Refusing to download from non-HTTPS agent download link: %s\n" "$AGENT_DOWNLOAD_LINK"
+        exit 1
+    fi
+
+    # SHA1 from the API must be a 40-character hex string.  This is the value
+    # we will verify the downloaded file against.
+    if ! [[ "$AGENT_FILE_SHA1" =~ ^[a-fA-F0-9]{40}$ ]]; then
+        printf "\nERROR:  Refusing to install agent without a valid SHA1 from the API: %s\n" "$AGENT_FILE_SHA1"
+        exit 1
+    fi
+}
+
+
+# Verify the downloaded package matches the SHA1 returned by the management
+# API.  Catches transport corruption / partial downloads and binds the
+# filename to its contents at install time (matches the official S1 Ansible
+# role's behavior).
+function verify_agent_sha1 () {
+    local expected actual
+    expected=$(printf '%s' "$AGENT_FILE_SHA1" | tr '[:upper:]' '[:lower:]')
+    actual=$(sha1sum -- "/tmp/$AGENT_FILE_NAME" | awk '{print $1}' | tr '[:upper:]' '[:lower:]')
+    if [[ "$actual" != "$expected" ]]; then
+        printf "\nERROR:  SHA1 mismatch on downloaded agent.  expected=%s actual=%s\n" "$expected" "$actual"
+        rm -f -- "/tmp/$AGENT_FILE_NAME"
+        exit 1
+    fi
+    printf "\nINFO:  SHA1 verified: %s \n" "$actual"
+}
+
+
 check_root
 detect_pkg_mgr_info
 awscli_check $PACKAGE_MANAGER
@@ -241,18 +293,20 @@ jq_check $PACKAGE_MANAGER
 sudo curl -sH "Accept: application/json" -H "Authorization: ApiToken $API_KEY" "$S1_MGMT_URL$API_ENDPOINT?countOnly=false&packageTypes=Agent&osTypes=linux&sortBy=createdAt&limit=20&fileExtension=$FILE_EXTENSION&sortOrder=desc" > response.txt
 check_api_response
 find_agent_info_by_architecture
-printf "\nINFO:  Downloading $AGENT_FILE_NAME \n"
-sudo curl -sH "Authorization: ApiToken $API_KEY" $AGENT_DOWNLOAD_LINK -o /tmp/$AGENT_FILE_NAME
-printf "\nINFO:  Installing S1 Agent: $(echo "sudo $AGENT_INSTALL_SYNTAX /tmp/$AGENT_FILE_NAME") \n"
-sudo $AGENT_INSTALL_SYNTAX /tmp/$AGENT_FILE_NAME
+validate_agent_info
+printf "\nINFO:  Downloading %s \n" "$AGENT_FILE_NAME"
+sudo curl -sH "Authorization: ApiToken $API_KEY" -o "/tmp/$AGENT_FILE_NAME" -- "$AGENT_DOWNLOAD_LINK"
+verify_agent_sha1
+printf "\nINFO:  Installing S1 Agent: sudo %s -- /tmp/%s \n" "$AGENT_INSTALL_SYNTAX" "$AGENT_FILE_NAME"
+sudo $AGENT_INSTALL_SYNTAX -- "/tmp/$AGENT_FILE_NAME"
 printf "\nINFO:  Setting Site Token... \n"
-sudo /opt/sentinelone/bin/sentinelctl management token set $SITE_TOKEN
+sudo /opt/sentinelone/bin/sentinelctl management token set "$SITE_TOKEN"
 
 
 #clean up files..
 printf "\nINFO:  Cleaning up files... \n"
 rm -f response.txt
 rm -f versions.txt
-rm -f /tmp/$AGENT_FILE_NAME
+rm -f -- "/tmp/$AGENT_FILE_NAME"
 
 printf "\nSUCCESS:  Finished installing SentinelOne Agent. \n\n"

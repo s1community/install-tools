@@ -22,6 +22,7 @@ PACKAGE_MANAGER=''
 AGENT_INSTALL_SYNTAX=''
 AGENT_FILE_NAME=''
 AGENT_DOWNLOAD_LINK=''
+AGENT_FILE_SHA1=''
 VERSION_COMPARE_RESULT=''
 
 Color_Off='\033[0m'       # Text Resets
@@ -135,6 +136,7 @@ function find_agent_info_by_architecture () {
             if [[ $FN == *$OS_ARCH* ]]; then
                 AGENT_FILE_NAME=$(cat response.txt | jq -r ".data[$i].fileName")
                 AGENT_DOWNLOAD_LINK=$(cat response.txt | jq -r ".data[$i].link")
+                AGENT_FILE_SHA1=$(cat response.txt | jq -r ".data[$i].sha1")
                 break
             fi
         done
@@ -144,6 +146,7 @@ function find_agent_info_by_architecture () {
             if [[ $FN != *"aarch"* ]]; then
                 AGENT_FILE_NAME=$(cat response.txt | jq -r ".data[$i].fileName")
                 AGENT_DOWNLOAD_LINK=$(cat response.txt | jq -r ".data[$i].link")
+                AGENT_FILE_SHA1=$(cat response.txt | jq -r ".data[$i].sha1")
                 break
             fi
         done
@@ -156,6 +159,49 @@ function find_agent_info_by_architecture () {
         echo ""
         exit 1
     fi
+}
+
+
+# Validate agent metadata returned by the management API before using it as a
+# path component or shell argument.  Without these checks, a tampered API
+# response could traverse out of /tmp, inject curl flags, or pass an option
+# through to dpkg/rpm.
+function validate_agent_info () {
+    if [[ "$AGENT_FILE_NAME" != "$(basename -- "$AGENT_FILE_NAME")" ]] \
+        || [[ "$AGENT_FILE_NAME" == *".."* ]] \
+        || ! [[ "$AGENT_FILE_NAME" =~ ^[A-Za-z0-9._-]+\.(deb|rpm)$ ]]; then
+        printf "\n${Red}ERROR:  Refusing to use untrusted agent file name returned by API: %s ${Color_Off}\n" "$AGENT_FILE_NAME"
+        exit 1
+    fi
+
+    # Download URL must be HTTPS so a tampered API response cannot redirect to
+    # a non-TLS or non-HTTP scheme.  The host is not restricted because
+    # SentinelOne may serve packages from a CDN; integrity is enforced via
+    # the SHA1 check below instead.
+    if ! [[ "$AGENT_DOWNLOAD_LINK" =~ ^https://[^[:space:]]+$ ]]; then
+        printf "\n${Red}ERROR:  Refusing to download from non-HTTPS agent download link: %s ${Color_Off}\n" "$AGENT_DOWNLOAD_LINK"
+        exit 1
+    fi
+
+    if ! [[ "$AGENT_FILE_SHA1" =~ ^[a-fA-F0-9]{40}$ ]]; then
+        printf "\n${Red}ERROR:  Refusing to install agent without a valid SHA1 from the API: %s ${Color_Off}\n" "$AGENT_FILE_SHA1"
+        exit 1
+    fi
+}
+
+
+# Verify the downloaded package matches the SHA1 returned by the management
+# API.
+function verify_agent_sha1 () {
+    local expected actual
+    expected=$(printf '%s' "$AGENT_FILE_SHA1" | tr '[:upper:]' '[:lower:]')
+    actual=$(sha1sum -- "/tmp/$AGENT_FILE_NAME" | awk '{print $1}' | tr '[:upper:]' '[:lower:]')
+    if [[ "$actual" != "$expected" ]]; then
+        printf "\n${Red}ERROR:  SHA1 mismatch on downloaded agent.  expected=%s actual=%s ${Color_Off}\n" "$expected" "$actual"
+        rm -f -- "/tmp/$AGENT_FILE_NAME"
+        exit 1
+    fi
+    printf "\n${Yellow}INFO:  SHA1 verified: %s ${Color_Off}\n" "$actual"
 }
 
 
@@ -192,12 +238,14 @@ jq_check $PACKAGE_MANAGER
 sudo curl -sH "Accept: application/json" -H "Authorization: ApiToken $API_TOKEN" "$S1_MGMT_URL$API_ENDPOINT?sortOrder=desc&fileExtension=$FILE_EXTENSION&limit=20&sortBy=version&status=$VERSION_STATUS&platformTypes=linux" > response.txt
 check_api_response
 find_agent_info_by_architecture
-printf "\n${Yellow}INFO:  Downloading $AGENT_FILE_NAME ${Color_Off}\n"
-sudo curl -sH "Authorization: ApiToken $API_TOKEN" $AGENT_DOWNLOAD_LINK -o /tmp/$AGENT_FILE_NAME
-printf "\n${Yellow}INFO:  Installing S1 Agent: $(echo "sudo $AGENT_INSTALL_SYNTAX /tmp/$AGENT_FILE_NAME") ${Color_Off}\n"
-sudo $AGENT_INSTALL_SYNTAX /tmp/$AGENT_FILE_NAME
+validate_agent_info
+printf "\n${Yellow}INFO:  Downloading %s ${Color_Off}\n" "$AGENT_FILE_NAME"
+sudo curl -sH "Authorization: ApiToken $API_TOKEN" -o "/tmp/$AGENT_FILE_NAME" -- "$AGENT_DOWNLOAD_LINK"
+verify_agent_sha1
+printf "\n${Yellow}INFO:  Installing S1 Agent: sudo %s -- /tmp/%s ${Color_Off}\n" "$AGENT_INSTALL_SYNTAX" "$AGENT_FILE_NAME"
+sudo $AGENT_INSTALL_SYNTAX -- "/tmp/$AGENT_FILE_NAME"
 printf "\n${Yellow}INFO:  Setting Site Token... ${Color_Off}\n"
-sudo /opt/sentinelone/bin/sentinelctl management token set $SITE_TOKEN
+sudo /opt/sentinelone/bin/sentinelctl management token set "$SITE_TOKEN"
 printf "\n${Yellow}INFO:  Starting Agent... ${Color_Off}\n"
 sudo /opt/sentinelone/bin/sentinelctl control start
 
@@ -205,6 +253,6 @@ sudo /opt/sentinelone/bin/sentinelctl control start
 printf "\n${Yellow}INFO:  Cleaning up files... ${Color_Off}\n"
 rm -f response.txt
 rm -f versions.txt
-rm -f /tmp/$AGENT_FILE_NAME
+rm -f -- "/tmp/$AGENT_FILE_NAME"
 
 printf "\n${Green}SUCCESS:  Finished installing SentinelOne Agent. ${Color_Off}\n\n"
