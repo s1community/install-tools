@@ -226,8 +226,8 @@ login ${S1_REPOSITORY_USERNAME}
 password ${S1_REPOSITORY_PASSWORD}
 EOF
     fi
-    apt update
-    apt install -y sentinelagent=${S1_AGENT_VERSION}
+    apt-get update
+    apt-get install -y sentinelagent=${S1_AGENT_VERSION}
 }
 
 
