@@ -120,7 +120,7 @@ esac
 
 # We derive the helm release/chart version from the SentinelOne Agent version/tag + set the s1helper tag to be the same as the s1agent tag.
 # This requires removing the [-ea|-ga] designator from the S1_AGENT_TAG
-HELM_RELEASE_VERSION=$(echo $S1_AGENT_TAG | cut -d "-" -f1) # ie: 25.1.3
+HELM_RELEASE_VERSION=$(echo $S1_AGENT_TAG | cut -d "-" -f1) # ie: 26.1.1
 S1_HELPER_TAG=$S1_AGENT_TAG
 
 # Get cluster name from the current context
@@ -216,7 +216,7 @@ fi
 
 # Check if the value of S1_AGENT_LOG_LEVEL is trace, debug, info (default), warning, error or fatal.  If not, it's invalid.
 if ! echo $S1_AGENT_LOG_LEVEL | egrep '^(trace|debug|info|warning|error|fatal)$'  &> /dev/null ; then
-    printf "\n${Red}ERROR:  The value passed for S1_AGENT_LOG_LEVEL does not contain a valid valude.  Valid values are trace, debug, info (default), warning, error or fatal. \n\n${Color_Off}"
+    printf "\n${Red}ERROR:  The value passed for S1_AGENT_LOG_LEVEL does not contain a valid value.  Valid values are trace, debug, info (default), warning, error or fatal. \n\n${Color_Off}"
     exit 1
 fi
 
