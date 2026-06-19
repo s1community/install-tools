@@ -47,7 +47,7 @@ else
 fi 
 
 # Check if mandatory arguments were passed to the script
-if [ $# -eq 4 ] || [ $# -eq 5 ]; then
+if [ $# -ge 4 ]; then
     printf "\n${Yellow}INFO:  Found $# arguments that were passed to the script. \n\n${Color_Off}"
     S1_REPOSITORY_USERNAME=$1
     S1_REPOSITORY_PASSWORD=$2
@@ -173,7 +173,7 @@ if ! command -v helm &> /dev/null ; then
 fi
 
 # Check that we have a context established
-if ! command -v kubectl get nodes  &> /dev/null ; then
+if ! kubectl get nodes  &> /dev/null ; then
     printf "\n${Red}Unable to issue 'kubectl get nodes' command.  Please ensure that a valid context has been established with the target cluster.\n"
     printf "ie: kubectl config get-context\n"
     printf "kubectl config use-context CONTEXT\n${Color_Off}"
@@ -303,7 +303,7 @@ helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --versio
     ${OPENSHIFT:+--set configuration.platform.type=openshift} \
     ${AUTOPILOT:+--set configuration.platform.gke.autopilot=true} \
     ${FARGATE:+--set configuration.env.injection.enabled=true --set helper.labels.Application=sentinelone --set configuration.env.agent.pod_uid=0 --set configuration.env.agent.pod_gid=0} \
-    ${EKSAUTO:+--set --set configuration.platform.type=bottlerocket} \
+    ${EKSAUTO:+--set configuration.platform.type=bottlerocket} \
     sentinelone/s1-agent
 
 
@@ -314,4 +314,4 @@ helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --versio
 # Check the status of the pods
 printf "\n${Purple}Running: kubectl wait --for=condition=ready --timeout=60s pod -n $S1_NAMESPACE -l app=s1-agent\n${Color_Off}"
 printf "\n${Purple}This should take less than 60 seconds in most cases...\n${Color_Off}"
-kubectl wait --for=condition=ready pod -n $S1_NAMESPACE -l app=s1-agent
+kubectl wait --for=condition=ready --timeout=60s pod -n $S1_NAMESPACE -l app=s1-agent
