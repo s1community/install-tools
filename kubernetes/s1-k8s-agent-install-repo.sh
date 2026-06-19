@@ -46,7 +46,7 @@ else
     printf "\n${Yellow}INFO:  No 's1.config' file found in $(pwd).${Color_Off}\n\n"
 fi 
 
-# Check if all 4 mandatory arguments were passed to the script
+# Check if mandatory arguments were passed to the script
 if [ $# -eq 4 ] || [ $# -eq 5 ]; then
     printf "\n${Yellow}INFO:  Found $# arguments that were passed to the script. \n\n${Color_Off}"
     S1_REPOSITORY_USERNAME=$1
