@@ -61,34 +61,36 @@ fi
 if [ $# -eq 0 ]; then
     printf "\n${Yellow}INFO:  No input arguments were passed to the script. \n\n${Color_Off}"
     S1_AGENT_LOG_LEVEL="info"
-    if [ -z ${K8S_TYPE} ]; then 
+    if [ -z "${K8S_TYPE}" ]; then
         K8S_TYPE="k8s"
     fi
-    if [ -z ${S1_ADMISSION_CONTROLLER} ]; then
+    if [ -z "${S1_ADMISSION_CONTROLLER}" ]; then
         S1_ADMISSION_CONTROLLER="false"
     fi
 fi
 
 # If the 4 mandatory variables have not been sourced from the s1.config file, passed via cmdline 
 #   arguments or read from exported variables of the parent shell, we'll prompt the user for them.
-if [ -z $S1_REPOSITORY_USERNAME ];then
+if [ -z "$S1_REPOSITORY_USERNAME" ];then
     echo ""
-    read -p "Please enter your SentinelOne Repo Username: " S1_REPOSITORY_USERNAME
+    read -rp "Please enter your SentinelOne Repo Username: " S1_REPOSITORY_USERNAME
 fi
 
-if [ -z $S1_REPOSITORY_PASSWORD ];then
+if [ -z "$S1_REPOSITORY_PASSWORD" ];then
     echo ""
-    read -p "Please enter your SentinelOne Repo Password: " S1_REPOSITORY_PASSWORD
+    read -rsp "Please enter your SentinelOne Repo Password: " S1_REPOSITORY_PASSWORD
+    echo ""
 fi
 
-if [ -z $S1_SITE_TOKEN ];then
+if [ -z "$S1_SITE_TOKEN" ];then
     echo ""
-    read -p "Please enter your SentinelOne Site Token: " S1_SITE_TOKEN
+    read -rsp "Please enter your SentinelOne Site Token: " S1_SITE_TOKEN
+    echo ""
 fi
 
-if [ -z $S1_AGENT_TAG ];then
+if [ -z "$S1_AGENT_TAG" ];then
     echo ""
-    read -p "Please enter the SentinelOne Agent Version to install (ie: 26.1.1-ga): " S1_AGENT_TAG
+    read -rp "Please enter the SentinelOne Agent Version to install (ie: 26.1.1-ga): " S1_AGENT_TAG
 fi
 
 # If K8S_TYPE is set to openshift, autopilot, or fargate, we set special variables that are used to dynamically add helm flags during install
@@ -115,6 +117,11 @@ case $K8S_TYPE in
   eksauto)
   EKSAUTO='true'
   echo "eksauto"
+  ;;
+
+  *)
+  printf "\n${Red}ERROR:  Invalid K8S_TYPE '${K8S_TYPE}'.  Valid values are: k8s, openshift, autopilot, fargate, eksauto. \n\n${Color_Off}"
+  exit 1
   ;;
 esac
 
@@ -209,7 +216,7 @@ if ! [ ${#S1_REPOSITORY_PASSWORD} -gt 160 ]; then
 fi
 
 # Check if the value of S1_AGENT_TAG is in the right format
-if ! echo $S1_AGENT_TAG | egrep '^[0-9][0-9].[0-9].[0-9]-[ge]a$' &> /dev/null ; then
+if ! echo "$S1_AGENT_TAG" | grep -E '^[0-9]{2}\.[0-9]\.[0-9]+-(ga|ea)$' &> /dev/null ; then
     printf "\n${Red}ERROR:  The value passed for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 26.1.1-ga, 25.4.2-ga,25.3.2-ga \n\n${Color_Off}"
     exit 1
 fi
