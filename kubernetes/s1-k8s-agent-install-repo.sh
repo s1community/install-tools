@@ -298,8 +298,8 @@ helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --versio
     --set agent.resources.requests.cpu=${S1_AGENT_REQUESTS_CPU} \
     --set configuration.env.agent.heap_trimming_enable=${S1_AGENT_HEAP_TRIMMING_ENABLE} \
     --set configuration.env.agent.log_level=${S1_AGENT_LOG_LEVEL} \
-    --set configuration.proxy=${S1_PROXY} \
-    --set configuration.dv_proxy=${S1_DV_PROXY} \
+    ${S1_PROXY:+--set configuration.proxy=${S1_PROXY}} \
+    ${S1_DV_PROXY:+--set configuration.dv_proxy=${S1_DV_PROXY}} \
     ${OPENSHIFT:+--set configuration.platform.type=openshift} \
     ${AUTOPILOT:+--set configuration.platform.gke.autopilot=true} \
     ${FARGATE:+--set configuration.env.injection.enabled=true --set helper.labels.Application=sentinelone --set configuration.env.agent.pod_uid=0 --set configuration.env.agent.pod_gid=0} \
