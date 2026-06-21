@@ -58,3 +58,15 @@ K8S_TYPE="k8s"
 #       enable an Admission Controller Policy in the SentinelOne management console:
 #       https://community.sentinelone.com/s/article/000011916 ("Configuring Admission Controller policies")
 S1_ADMISSION_CONTROLLER="true"
+
+# Cluster name, EXACTLY as it appears in AWS/Azure/GCP.  If left empty, the script prompts for it
+#   (it is NOT derived from the kubectl context, which rarely matches the cloud cluster name).
+CLUSTER_NAME=""
+
+# Cloud Cluster UID -- enables deterministic consolidation of the agent's inventory with the cloud
+#   (CNS) inventory surface.  Set this for MANAGED clusters (EKS/AKS/GKE) deployed manually; leave it
+#   empty for self-managed clusters (the scanner/helper generates the ID).  Look it up with:
+#     AWS EKS:    aws eks describe-cluster --name <name> --region <region> --query 'cluster.arn' --output text
+#     Azure AKS:  az aks show --name <name> --resource-group <rg> --query 'id' --output tsv
+#     Google GKE: gcloud container clusters describe <name> --region <region> --format='value(id)'
+CLUSTER_UID=""

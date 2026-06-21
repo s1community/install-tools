@@ -2,7 +2,7 @@
 ##############################################################################################################
 # Description:  Bash script to aid with automating SentinelOne CWS Container agent install
 # 
-# Usage:  sudo ./s1-k8s-agent-install-repo.sh [USERNAME] [PASSWORD] [SITE_TOKEN] [AGENT_TAG] [LOG_LEVEL] [K8S_TYPE] [ADMISSION_CONTROLLER]
+# Usage:  sudo ./s1-k8s-agent-install-repo.sh [USERNAME] [PASSWORD] [SITE_TOKEN] [AGENT_TAG] [LOG_LEVEL] [K8S_TYPE] [ADMISSION_CONTROLLER] [CLUSTER_NAME] [CLUSTER_UID]
 #
 # Arguments may be supplied positionally (in the order below), via an 's1.config' file in the
 # current directory, or as exported environment variables.  If a required value is not found by
@@ -20,6 +20,16 @@
 #   5  S1_AGENT_LOG_LEVEL        no    trace|debug|info|warning|error|fatal                     info
 #   6  K8S_TYPE                  no    k8s|openshift|autopilot|fargate|eksauto                  k8s
 #   7  S1_ADMISSION_CONTROLLER   no    true|false (enable validating admission controller)      true
+#   8  CLUSTER_NAME              no*   Cluster name EXACTLY as it appears in AWS/Azure/GCP       (prompt)
+#   9  CLUSTER_UID               no*   Cloud Cluster UID for managed clusters (see below)        ""
+#
+#  * For managed EKS/AKS/GKE clusters deployed manually, set CLUSTER_NAME and CLUSTER_UID so the
+#    agent's inventory is consolidated deterministically with the cloud (CNS) inventory surface.
+#    CLUSTER_UID is the cloud-specific cluster identifier:
+#       AWS EKS:    cluster ARN          aws eks describe-cluster --name <name> --region <region> --query 'cluster.arn' --output text
+#       Azure AKS:  Resource ID          az aks show --name <name> --resource-group <rg> --query 'id' --output tsv
+#       Google GKE: cluster ID           gcloud container clusters describe <name> --region <region> --format='value(id)'
+#    For self-managed (non-cloud) clusters, leave CLUSTER_UID empty -- the scanner/helper generates it.
 #
 #
 # Create Repo Username/Password:  https://community.sentinelone.com/s/article/000011517
@@ -79,6 +89,8 @@ White='\033[0;37m'        # White
 # S1_AGENT_LOG_LEVEL="info"           # trace|debug|info|warning|error|fatal  (default: info)
 # K8S_TYPE="k8s"                      # k8s|openshift|autopilot|fargate|eksauto  (default: k8s; see header link)
 # S1_ADMISSION_CONTROLLER="true"      # true|false  (default: true)
+# CLUSTER_NAME=""                     # Cluster name EXACTLY as it appears in AWS/Azure/GCP (prompted if empty)
+# CLUSTER_UID=""                      # Cloud Cluster UID for managed clusters; leave empty for self-managed (see header)
 
 # Check for s1.config file.  If it exists, source it.
 if [ -f s1.config ]; then
@@ -98,6 +110,8 @@ if [ $# -ge 4 ]; then
     S1_AGENT_LOG_LEVEL="${5:-info}"
     K8S_TYPE="${6:-k8s}"
     S1_ADMISSION_CONTROLLER="${7:-true}"
+    CLUSTER_NAME="${8:-$CLUSTER_NAME}"
+    CLUSTER_UID="${9:-$CLUSTER_UID}"
 fi
 
 # Check if arguments have been passed at all.
@@ -180,9 +194,8 @@ esac
 HELM_RELEASE_VERSION=$(echo $S1_AGENT_TAG | cut -d "-" -f1) # ie: 26.1.1
 S1_HELPER_TAG=$S1_AGENT_TAG
 
-# Get cluster name from the current context
-CLUSTER_NAME=$(kubectl config view --minify -o jsonpath='{.clusters[].name}')
-printf "\n${Purple}Cluster Name:  $CLUSTER_NAME\n${Color_Off}"
+# NOTE: Cluster identity (CLUSTER_NAME / CLUSTER_UID) is resolved later, after the kubectl context
+#       sanity checks, so we can detect the cloud provider and prompt with provider-specific guidance.
 
 # The following variable values can be customized as you see fit (or can be left as is).
 # For guidance on sizing the agent/helper resource requests and limits below, see:
@@ -237,6 +250,91 @@ if ! kubectl get nodes  &> /dev/null ; then
     printf "ie: kubectl config get-context\n"
     printf "kubectl config use-context CONTEXT\n${Color_Off}"
     exit 1
+fi
+
+################################################################################
+# Resolve cluster identity (CLUSTER_NAME / CLUSTER_UID) for inventory consolidation
+################################################################################
+
+# Detect the cloud provider from the first node's providerID.  This needs no extra credentials and
+#   is far more reliable than the kubectl context name.
+#   providerID prefixes:  aws:///...  azure:///...  gce://...   (anything else => self-managed)
+NODE_PROVIDER_ID=$(kubectl get nodes -o jsonpath='{.items[0].spec.providerID}' 2>/dev/null)
+case "$NODE_PROVIDER_ID" in
+    aws:*)   CLOUD_PROVIDER="aws"   ;;
+    azure:*) CLOUD_PROVIDER="azure" ;;
+    gce:*)   CLOUD_PROVIDER="gcp"   ;;
+    *)       CLOUD_PROVIDER="none"  ;;
+esac
+
+# Best-effort: sniff a SUGGESTED cluster name from well-known node labels.  These are NOT authoritative
+#   (labels are provider-specific and frequently hold an adjacent value rather than the cloud cluster
+#   name), so we only offer the result as a pre-filled default the user can accept or override -- it is
+#   never trusted blindly.
+SUGGESTED_CLUSTER_NAME=""
+case "$CLOUD_PROVIDER" in
+    aws)
+        # eksctl-built clusters stamp this label; plain EKS managed node groups usually do not.
+        SUGGESTED_CLUSTER_NAME=$(kubectl get nodes -o jsonpath='{.items[0].metadata.labels.alpha\.eksctl\.io/cluster-name}' 2>/dev/null)
+        ;;
+    azure)
+        # AKS nodes carry kubernetes.azure.com/cluster = MC_<resourceGroup>_<clusterName>_<region>.
+        #   Parse the cluster name from the middle (best-effort; ambiguous if the RG/name contain '_').
+        AKS_NODE_RG=$(kubectl get nodes -o jsonpath='{.items[0].metadata.labels.kubernetes\.azure\.com/cluster}' 2>/dev/null)
+        if [ -n "$AKS_NODE_RG" ]; then
+            SUGGESTED_CLUSTER_NAME=$(echo "$AKS_NODE_RG" | sed -E 's/^MC_.+_([^_]+)_[^_]+$/\1/')
+            # If the pattern did not match, sed echoes the input unchanged -- treat that as "no suggestion".
+            [ "$SUGGESTED_CLUSTER_NAME" = "$AKS_NODE_RG" ] && SUGGESTED_CLUSTER_NAME=""
+        fi
+        ;;
+    gcp)
+        # GKE exposes no cluster-name node label; the name lives in the GCP metadata server (unreachable here).
+        :
+        ;;
+esac
+
+# Cluster name MUST match the cluster's name EXACTLY as it appears in AWS/Azure/GCP.  We intentionally
+#   do NOT derive it from the kubectl context, because the context name rarely matches the cloud name.
+if [ -z "$CLUSTER_NAME" ]; then
+    echo ""
+    printf "${Yellow}The Cluster Name should match the cluster's name EXACTLY as it appears in AWS, Azure, or GCP.${Color_Off}\n"
+    if [ -n "$SUGGESTED_CLUSTER_NAME" ]; then
+        printf "${Yellow}A possible name was detected from node labels -- VERIFY it is correct before accepting.${Color_Off}\n"
+        read -rp "Please enter the Cluster Name [${SUGGESTED_CLUSTER_NAME}]: " CLUSTER_NAME
+        CLUSTER_NAME="${CLUSTER_NAME:-$SUGGESTED_CLUSTER_NAME}"
+    else
+        read -rp "Please enter the Cluster Name: " CLUSTER_NAME
+    fi
+fi
+printf "\n${Purple}Cluster Name:  ${CLUSTER_NAME}\n${Color_Off}"
+
+# Cluster UID enables deterministic consolidation of inventory between the agent and the cloud (CNS)
+#   surface.  Set it for MANAGED clusters deployed manually; leave it empty for self-managed clusters
+#   (the scanner/helper generates the ID).  If we detect a managed cluster but no UID was supplied,
+#   show the provider-specific command and prompt for it.
+if [ -z "$CLUSTER_UID" ] && [ "$CLOUD_PROVIDER" != "none" ]; then
+    echo ""
+    printf "${Yellow}Detected a managed '${CLOUD_PROVIDER}' cluster, but no Cluster UID was provided.${Color_Off}\n"
+    printf "${Yellow}A Cluster UID lets SentinelOne deterministically consolidate the agent's inventory with the cloud inventory surface.${Color_Off}\n\n"
+    case "$CLOUD_PROVIDER" in
+        aws)
+            printf "  For AWS EKS, the Cluster UID is the ARN of the cluster:\n"
+            printf "    ${Cyan}aws eks describe-cluster --name ${CLUSTER_NAME} --region <region> --query 'cluster.arn' --output text${Color_Off}\n\n"
+            ;;
+        azure)
+            printf "  For Azure AKS, the Cluster UID is the Resource ID of the cluster:\n"
+            printf "    ${Cyan}az aks show --name ${CLUSTER_NAME} --resource-group <resource-group> --query 'id' --output tsv${Color_Off}\n\n"
+            ;;
+        gcp)
+            printf "  For Google GKE, the Cluster UID is the cluster ID:\n"
+            printf "    ${Cyan}gcloud container clusters describe ${CLUSTER_NAME} --region <region> --format='value(id)'${Color_Off}\n\n"
+            ;;
+    esac
+    read -rp "Please enter the Cluster UID (or press Enter to skip): " CLUSTER_UID
+fi
+
+if [ -n "$CLUSTER_UID" ]; then
+    printf "${Purple}Cluster UID:   ${CLUSTER_UID}\n${Color_Off}"
 fi
 
 ################################################################################
@@ -343,6 +441,29 @@ EOF
     kubectl apply -f ${S1_ALLOWLIST}
 fi
 
+# Re-home guard:  if this release already exists with a DIFFERENT Cluster UID, warn before changing it.
+#   The most likely cause is reusing the same script or 's1.config' against a SECOND cluster -- every
+#   cluster must have its own unique Cluster UID.  Changing the UID on an existing release re-homes the
+#   cluster's identity in SentinelOne and can orphan or hide findings tied to the previous cluster asset.
+EXISTING_CLUSTER_UID=$(helm get values ${HELM_RELEASE_NAME} --namespace ${S1_NAMESPACE} -o json 2>/dev/null \
+    | sed -n 's/.*"uid": *"\([^"]*\)".*/\1/p')
+if [ -n "$EXISTING_CLUSTER_UID" ] && [ -n "$CLUSTER_UID" ] && [ "$EXISTING_CLUSTER_UID" != "$CLUSTER_UID" ]; then
+    printf "\n${Red}WARNING:  The existing '${HELM_RELEASE_NAME}' release in namespace '${S1_NAMESPACE}' already has a Cluster UID:\n"
+    printf "            ${EXISTING_CLUSTER_UID}\n"
+    printf "          which DIFFERS from the value you are about to apply:\n"
+    printf "            ${CLUSTER_UID}\n\n"
+    printf "          This usually means the same script or 's1.config' is being reused against a DIFFERENT\n"
+    printf "          cluster -- each cluster must have its own unique Cluster UID.  If so, you are likely\n"
+    printf "          running against the wrong context; check 'kubectl config current-context'.\n\n"
+    printf "          Proceeding will re-home this cluster's identity in SentinelOne and may orphan or hide\n"
+    printf "          findings tied to the previous cluster asset.${Color_Off}\n\n"
+    read -rp "Type 'yes' to proceed with the new Cluster UID: " CONFIRM_UID
+    if [ "$CONFIRM_UID" != "yes" ]; then
+        printf "\n${Red}Aborting at user request.\n${Color_Off}"
+        exit 1
+    fi
+fi
+
 # Deploy S1 agent!  Upgrade it if it already exists
 # For the full list of available Helm chart options/values, see:
 #   https://community.sentinelone.com/s/article/000008816 ("Container Agent Helm chart options")
@@ -355,6 +476,7 @@ helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --versio
     --set configuration.repositories.helper=${REPO_HELPER} \
     --set configuration.tag.helper=${S1_HELPER_TAG} \
     --set configuration.cluster.name=$CLUSTER_NAME \
+    ${CLUSTER_UID:+--set configuration.cluster.uid=$CLUSTER_UID} \
     --set helper.nodeSelector."kubernetes\\.io/os"=linux \
     --set agent.nodeSelector."kubernetes\\.io/os"=linux \
     --set configuration.env.admission_controllers.validating.enabled=${S1_ADMISSION_CONTROLLER} \
