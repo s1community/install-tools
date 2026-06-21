@@ -2,7 +2,7 @@
 ##############################################################################################################
 # Description:  Bash script to aid with automating SentinelOne CWS Container agent install
 # 
-# Usage:  sudo ./s1-k8s-agent-install-repo.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD S1_SITE_TOKEN S1_AGENT_TAG S1_AGENT_LOG_LEVEL K8S_TYPE
+# Usage:  sudo ./s1-k8s-agent-install-repo.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD S1_SITE_TOKEN S1_AGENT_TAG S1_AGENT_LOG_LEVEL K8S_TYPE S1_ADMISSION_CONTROLLER
 # 
 # Version:  2026.06.19
 #
@@ -55,6 +55,7 @@ if [ $# -ge 4 ]; then
     S1_AGENT_TAG=$4
     S1_AGENT_LOG_LEVEL="${5:-info}"
     K8S_TYPE="${6:-k8s}"
+    S1_ADMISSION_CONTROLLER="${7:-false}"
 fi
 
 # Check if arguments have been passed at all.
@@ -68,6 +69,10 @@ if [ $# -eq 0 ]; then
         S1_ADMISSION_CONTROLLER="false"
     fi
 fi
+
+# Ensure S1_ADMISSION_CONTROLLER always has a value, regardless of how the script was invoked
+#   (positional arg, s1.config, exported env var, or not set at all).
+S1_ADMISSION_CONTROLLER="${S1_ADMISSION_CONTROLLER:-false}"
 
 # If the 4 mandatory variables have not been sourced from the s1.config file, passed via cmdline 
 #   arguments or read from exported variables of the parent shell, we'll prompt the user for them.
@@ -224,6 +229,12 @@ fi
 # Check if the value of S1_AGENT_LOG_LEVEL is trace, debug, info (default), warning, error or fatal.  If not, it's invalid.
 if ! echo $S1_AGENT_LOG_LEVEL | egrep '^(trace|debug|info|warning|error|fatal)$'  &> /dev/null ; then
     printf "\n${Red}ERROR:  The value passed for S1_AGENT_LOG_LEVEL does not contain a valid value.  Valid values are trace, debug, info (default), warning, error or fatal. \n\n${Color_Off}"
+    exit 1
+fi
+
+# Check if the value of S1_ADMISSION_CONTROLLER is either true or false (default).  If not, it's invalid.
+if ! echo $S1_ADMISSION_CONTROLLER | egrep '^(true|false)$' &> /dev/null ; then
+    printf "\n${Red}ERROR:  The value passed for S1_ADMISSION_CONTROLLER does not contain a valid value.  Valid values are true or false (default). \n\n${Color_Off}"
     exit 1
 fi
 
