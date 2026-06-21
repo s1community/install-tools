@@ -2,14 +2,56 @@
 ##############################################################################################################
 # Description:  Bash script to aid with automating SentinelOne CWS Container agent install
 # 
-# Usage:  sudo ./s1-k8s-agent-install-repo.sh S1_REPOSITORY_USERNAME S1_REPOSITORY_PASSWORD S1_SITE_TOKEN S1_AGENT_TAG S1_AGENT_LOG_LEVEL K8S_TYPE S1_ADMISSION_CONTROLLER
-# 
-# Version:  2026.06.19
+# Usage:  sudo ./s1-k8s-agent-install-repo.sh [USERNAME] [PASSWORD] [SITE_TOKEN] [AGENT_TAG] [LOG_LEVEL] [K8S_TYPE] [ADMISSION_CONTROLLER]
 #
-# Create Repo Username/Password:  https://community.sentinelone.com/s/article/000011808
-# 
+# Arguments may be supplied positionally (in the order below), via an 's1.config' file in the
+# current directory, or as exported environment variables.  If a required value is not found by
+# any of these methods, the script will prompt for it interactively.
+#
+# RECOMMENDED:  Use an 's1.config' file (copy 's1.config.example' to 's1.config') for the sensitive
+# values (registry credentials and site token).  See the SECURITY note below.
+#
+#   #  Variable                  Req?  Description / valid values                              Default
+#   -  ------------------------  ----  -------------------------------------------------------  -------
+#   1  S1_REPOSITORY_USERNAME    yes   Base64 registry username (see header link)               -
+#   2  S1_REPOSITORY_PASSWORD    yes   Base64 registry password (see header link)               -
+#   3  S1_SITE_TOKEN             yes   Base64 site token (see header link)                      -
+#   4  S1_AGENT_TAG              yes   X.Y.Z-(ga|ea), e.g. 26.1.1-ga (see header link)          -
+#   5  S1_AGENT_LOG_LEVEL        no    trace|debug|info|warning|error|fatal                     info
+#   6  K8S_TYPE                  no    k8s|openshift|autopilot|fargate|eksauto                  k8s
+#   7  S1_ADMISSION_CONTROLLER   no    true|false (enable validating admission controller)      true
+#
+#
+# Create Repo Username/Password:  https://community.sentinelone.com/s/article/000011517
+#   (see the "Manual deployment for Container Agent" section)
+#
+# Retrieve a Site Token:  https://community.sentinelone.com/s/article/000004904
+#   ("Retrieving a Site or Group Token")
+#
+# Find the Latest Agent Version:  https://community.sentinelone.com/s/article/000004966
+#   ("Latest Information" - use the "Image index tag" value for "Container Agent"
+#    in the "Latest Agent GA and SP releases" table)
+#
+# Supported Kubernetes Types & Resource Sizing:  https://community.sentinelone.com/s/article/000008829
+#   ("Requirements and recommendations for Container Agent" - covers supported K8S_TYPE values
+#    and guidance for the agent/helper resource requests and limits set below)
+#
+# All Helm Chart Options:  https://community.sentinelone.com/s/article/000008816
+#   ("Container Agent Helm chart options" - full reference for the --set flags used below)
+#
+# Version:  2026.06.21
 #
 # NOTE: Please be aware that there is a 100 pulls/hour rate limit for the SentinelOne repository!!
+#
+# SECURITY: Passing the registry credentials and site token as command-line arguments records them
+#       in your shell history (e.g. ~/.bash_history) and exposes them to other local users via the
+#       process list (ps).  Prefer an 's1.config' file, or run with no arguments to be prompted
+#       interactively (prompt input is not echoed or stored).
+#
+# NOTE: Setting S1_ADMISSION_CONTROLLER=true only deploys the SentinelOne validating admission
+#       controller webhook.  To actually monitor and/or enforce, you must also enable an
+#       Admission Controller Policy in the SentinelOne management console:
+#       https://community.sentinelone.com/s/article/000011916 ("Configuring Admission Controller policies")
 ##############################################################################################################
 
 
@@ -30,13 +72,13 @@ White='\033[0;37m'        # White
 ################################################################################
 
 # Example format of 's1.config' file for usage with this script
-# S1_REPOSITORY_USERNAME=""
-# S1_REPOSITORY_PASSWORD=""
-# S1_SITE_TOKEN=""
-# S1_AGENT_TAG="26.1.1-ga"
-# S1_AGENT_LOG_LEVEL="info"
-# S1_ADMISSION_CONTROLLER="false"
-# K8S_TYPE="k8s"
+# S1_REPOSITORY_USERNAME=""           # Base64 registry username (required; see header link)
+# S1_REPOSITORY_PASSWORD=""           # Base64 registry password (required; see header link)
+# S1_SITE_TOKEN=""                    # Base64 site token (required; see header link)
+# S1_AGENT_TAG="26.1.1-ga"            # Agent version, X.Y.Z-(ga|ea) (required; see header link)
+# S1_AGENT_LOG_LEVEL="info"           # trace|debug|info|warning|error|fatal  (default: info)
+# K8S_TYPE="k8s"                      # k8s|openshift|autopilot|fargate|eksauto  (default: k8s; see header link)
+# S1_ADMISSION_CONTROLLER="true"      # true|false  (default: true)
 
 # Check for s1.config file.  If it exists, source it.
 if [ -f s1.config ]; then
@@ -55,24 +97,20 @@ if [ $# -ge 4 ]; then
     S1_AGENT_TAG=$4
     S1_AGENT_LOG_LEVEL="${5:-info}"
     K8S_TYPE="${6:-k8s}"
-    S1_ADMISSION_CONTROLLER="${7:-false}"
+    S1_ADMISSION_CONTROLLER="${7:-true}"
 fi
 
 # Check if arguments have been passed at all.
 if [ $# -eq 0 ]; then
     printf "\n${Yellow}INFO:  No input arguments were passed to the script. \n\n${Color_Off}"
-    S1_AGENT_LOG_LEVEL="info"
-    if [ -z "${K8S_TYPE}" ]; then
-        K8S_TYPE="k8s"
-    fi
-    if [ -z "${S1_ADMISSION_CONTROLLER}" ]; then
-        S1_ADMISSION_CONTROLLER="false"
-    fi
 fi
 
-# Ensure S1_ADMISSION_CONTROLLER always has a value, regardless of how the script was invoked
-#   (positional arg, s1.config, exported env var, or not set at all).
-S1_ADMISSION_CONTROLLER="${S1_ADMISSION_CONTROLLER:-false}"
+# Apply defaults for the optional variables so they always have a value, regardless of how the
+#   script was invoked (positional arg, s1.config, exported env var, or not set at all).  This
+#   also covers the case where 1-3 positional args are passed (neither branch above runs).
+S1_AGENT_LOG_LEVEL="${S1_AGENT_LOG_LEVEL:-info}"
+K8S_TYPE="${K8S_TYPE:-k8s}"
+S1_ADMISSION_CONTROLLER="${S1_ADMISSION_CONTROLLER:-true}"
 
 # If the 4 mandatory variables have not been sourced from the s1.config file, passed via cmdline 
 #   arguments or read from exported variables of the parent shell, we'll prompt the user for them.
@@ -98,34 +136,41 @@ if [ -z "$S1_AGENT_TAG" ];then
     read -rp "Please enter the SentinelOne Agent Version to install (ie: 26.1.1-ga): " S1_AGENT_TAG
 fi
 
-# If K8S_TYPE is set to openshift, autopilot, or fargate, we set special variables that are used to dynamically add helm flags during install
+# If K8S_TYPE is set to openshift, autopilot, fargate, or eksauto, we set special variables that are used to dynamically add helm flags during install
 case $K8S_TYPE in
   k8s)
-  echo "standard k8s"
+  printf "\n${Yellow}INFO:  Detected K8S_TYPE='k8s' (standard Kubernetes). \n\n${Color_Off}"
   ;;
 
   openshift)
   OPENSHIFT='true'
-  echo "openshift"
+  printf "\n${Yellow}INFO:  Detected K8S_TYPE='openshift' (Red Hat OpenShift). \n\n${Color_Off}"
   ;;
 
   autopilot)
+  # GKE Autopilot deployment guide: https://community.sentinelone.com/s/article/000011984
+  #   ("Deploying the Container Agent to GKE Autopilot")
   AUTOPILOT='true'
-  echo "autopilot"
+  printf "\n${Yellow}INFO:  Detected K8S_TYPE='autopilot' (GKE Autopilot). \n\n${Color_Off}"
   ;;
 
   fargate)
+  # EKS Fargate deployment guide: https://community.sentinelone.com/s/article/000012505
+  #   ("Deploying the Container Agent on Kubernetes with Fargate")
   FARGATE='true'
-  echo "fargate"
+  printf "\n${Yellow}INFO:  Detected K8S_TYPE='fargate' (EKS Fargate). \n\n${Color_Off}"
   ;;
 
   eksauto)
   EKSAUTO='true'
-  echo "eksauto"
+  printf "\n${Yellow}INFO:  Detected K8S_TYPE='eksauto' (EKS Auto Mode). \n\n${Color_Off}"
   ;;
 
   *)
-  printf "\n${Red}ERROR:  Invalid K8S_TYPE '${K8S_TYPE}'.  Valid values are: k8s, openshift, autopilot, fargate, eksauto. \n\n${Color_Off}"
+  printf "\n${Red}ERROR:  Invalid K8S_TYPE '${K8S_TYPE}'.  Valid values are: k8s, openshift, autopilot, fargate, eksauto. \n${Color_Off}"
+  printf "\nFor details on ${Purple}supported Kubernetes types${Color_Off}, please see the following KB article:\n"
+  printf "    ${Blue}https://community.sentinelone.com/s/article/000008829 ${Color_Off} \n"
+  printf "    ${Cyan}(\"Requirements and recommendations for Container Agent\")${Color_Off} \n\n"
   exit 1
   ;;
 esac
@@ -140,6 +185,8 @@ CLUSTER_NAME=$(kubectl config view --minify -o jsonpath='{.clusters[].name}')
 printf "\n${Purple}Cluster Name:  $CLUSTER_NAME\n${Color_Off}"
 
 # The following variable values can be customized as you see fit (or can be left as is).
+# For guidance on sizing the agent/helper resource requests and limits below, see:
+#   https://community.sentinelone.com/s/article/000008829 ("Requirements and recommendations for Container Agent")
 S1_PULL_SECRET_NAME=sentinelone-registry
 HELM_RELEASE_NAME=sentinelone
 S1_NAMESPACE=sentinelone
@@ -161,7 +208,7 @@ S1_AGENT_HEAP_TRIMMING_ENABLE='true'
 S1_PROXY=''
 S1_DV_PROXY=''
 
-# The following variables SHOULD NOT BE ALTERED
+# The following variables SHOULD NOT BE ALTERED unless you need to use the GovCloud Repo URL of 'containers.na2.s1gov.net'.
 REPO_BASE=containers.sentinelone.net
 REPO_HELPER=$REPO_BASE/cws-agent/s1helper
 REPO_AGENT=$REPO_BASE/cws-agent/s1agent
@@ -197,44 +244,50 @@ fi
 ################################################################################
 
 # Check if the value of S1_SITE_TOKEN is in the right format
-if ! echo $S1_SITE_TOKEN | base64 -d | grep sentinelone.net &> /dev/null ; then
-    printf "\n${Red}ERROR:  Site Token does not decode correctly.  Please ensure that you've passed a valid Site Token as the first argument to the script. \n${Color_Off}"
+if ! echo "$S1_SITE_TOKEN" | base64 -d | grep sentinelone.net &> /dev/null ; then
+    printf "\n${Red}ERROR:  Site Token does not decode correctly.  Please ensure that you've provided a valid Site Token (S1_SITE_TOKEN). \n${Color_Off}"
     printf "\nFor instructions on obtaining a ${Purple}Site Token${Color_Off} from the SentinelOne management console, please see the following KB article:\n"
-    printf "    ${Blue}https://community.sentinelone.com/s/article/000004904 ${Color_Off} \n\n"
+    printf "    ${Blue}https://community.sentinelone.com/s/article/000004904 ${Color_Off} \n"
+    printf "    ${Cyan}(\"Retrieving a Site or Group Token\")${Color_Off} \n\n"
     exit 1
 fi
 
 # Check if the value of S1_REPOSITORY_USERNAME is in the right format
-if ! echo $S1_REPOSITORY_USERNAME | base64 -d | egrep '^[0-9]+\:(aws|gcp)\:[a-zA-Z0-9-]+\:[a-zA-Z0-9-]+$' &> /dev/null ; then
-    printf "\n${Red}ERROR:  That value passed for S1_REPOSITORY_USERNAME does not decode correctly.  Please ensure that you've passed a valid Registry Username as the second argument to the script. \n${Color_Off}"
+if ! echo "$S1_REPOSITORY_USERNAME" | base64 -d | grep -E '^[0-9]+\:(aws|gcp)\:[a-zA-Z0-9-]+\:[a-zA-Z0-9-]+$' &> /dev/null ; then
+    printf "\n${Red}ERROR:  The value provided for S1_REPOSITORY_USERNAME does not decode correctly.  Please ensure that you've provided a valid Registry Username (S1_REPOSITORY_USERNAME). \n${Color_Off}"
     printf "\nFor instructions on obtaining ${Purple}Registry Credentials${Color_Off} from the SentinelOne management console, please see the following KB article:\n"
-    printf "    ${Blue}https://community.sentinelone.com/s/article/000008771 ${Color_Off} \n\n"
+    printf "    ${Blue}https://community.sentinelone.com/s/article/000011517 ${Color_Off} \n"
+    printf "    ${Cyan}(see the \"Manual deployment for Container Agent\" section)${Color_Off} \n\n"
     exit 1
 fi
 
 # Check if the value of S1_REPOSITORY_PASSWORD is in the right format
 if ! [ ${#S1_REPOSITORY_PASSWORD} -gt 160 ]; then
-    printf "\n${Red}ERROR:  That value passed for S1_REPOSITORY_PASSWORD did not pass a basic length test (longer than 160 characters).  Please ensure that you've passed a valid Registry Password as the second argument to the script. \n${Color_Off}"
+    printf "\n${Red}ERROR:  The value provided for S1_REPOSITORY_PASSWORD did not pass a basic length test (longer than 160 characters).  Please ensure that you've provided a valid Registry Password (S1_REPOSITORY_PASSWORD). \n${Color_Off}"
     printf "\nFor instructions on obtaining ${Purple}Registry Credentials${Color_Off} from the SentinelOne management console, please see the following KB article:\n"
-    printf "    ${Blue}https://community.sentinelone.com/s/article/000008771 ${Color_Off} \n\n"
+    printf "    ${Blue}https://community.sentinelone.com/s/article/000011517 ${Color_Off} \n"
+    printf "    ${Cyan}(see the \"Manual deployment for Container Agent\" section)${Color_Off} \n\n"
     exit 1
 fi
 
 # Check if the value of S1_AGENT_TAG is in the right format
 if ! echo "$S1_AGENT_TAG" | grep -E '^[0-9]{2}\.[0-9]\.[0-9]+-(ga|ea)$' &> /dev/null ; then
-    printf "\n${Red}ERROR:  The value passed for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 26.1.1-ga, 25.4.2-ga,25.3.2-ga \n\n${Color_Off}"
+    printf "\n${Red}ERROR:  The value provided for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 26.1.1-ga, 25.4.2-ga,25.3.2-ga \n${Color_Off}"
+    printf "\nFor the ${Purple}latest available Agent versions${Color_Off}, please see the following KB article:\n"
+    printf "    ${Blue}https://community.sentinelone.com/s/article/000004966 ${Color_Off} \n"
+    printf "    ${Cyan}(\"Latest Information\" - \"Image index tag\" for \"Container Agent\" in the \"Latest Agent GA and SP releases\" table)${Color_Off} \n\n"
     exit 1
 fi
 
 # Check if the value of S1_AGENT_LOG_LEVEL is trace, debug, info (default), warning, error or fatal.  If not, it's invalid.
-if ! echo $S1_AGENT_LOG_LEVEL | egrep '^(trace|debug|info|warning|error|fatal)$'  &> /dev/null ; then
-    printf "\n${Red}ERROR:  The value passed for S1_AGENT_LOG_LEVEL does not contain a valid value.  Valid values are trace, debug, info (default), warning, error or fatal. \n\n${Color_Off}"
+if ! echo "$S1_AGENT_LOG_LEVEL" | grep -E '^(trace|debug|info|warning|error|fatal)$' &> /dev/null ; then
+    printf "\n${Red}ERROR:  The value provided for S1_AGENT_LOG_LEVEL does not contain a valid value.  Valid values are trace, debug, info (default), warning, error or fatal. \n\n${Color_Off}"
     exit 1
 fi
 
-# Check if the value of S1_ADMISSION_CONTROLLER is either true or false (default).  If not, it's invalid.
-if ! echo $S1_ADMISSION_CONTROLLER | egrep '^(true|false)$' &> /dev/null ; then
-    printf "\n${Red}ERROR:  The value passed for S1_ADMISSION_CONTROLLER does not contain a valid value.  Valid values are true or false (default). \n\n${Color_Off}"
+# Check if the value of S1_ADMISSION_CONTROLLER is either true (default) or false.  If not, it's invalid.
+if ! echo "$S1_ADMISSION_CONTROLLER" | grep -E '^(true|false)$' &> /dev/null ; then
+    printf "\n${Red}ERROR:  The value provided for S1_ADMISSION_CONTROLLER does not contain a valid value.  Valid values are true (default) or false. \n\n${Color_Off}"
     exit 1
 fi
 
@@ -249,10 +302,10 @@ if ! kubectl get ns ${S1_NAMESPACE} &> /dev/null ; then
     kubectl create namespace ${S1_NAMESPACE}
 fi
 
-# Create Kubernetes secret to house the credentials used to access the container registry repos
-printf "\n${Purple}Creating K8s secret ${S1_PULL_SECRET_NAME}...\n${Color_Off}"
+# Create the image pull secret that holds the credentials used to authenticate to the SentinelOne container registry
+printf "\n${Purple}Configuring image pull secret '${S1_PULL_SECRET_NAME}' for the SentinelOne container registry...\n${Color_Off}"
 if ! kubectl get secret ${S1_PULL_SECRET_NAME} -n ${S1_NAMESPACE} &> /dev/null ; then
-    printf "\n${Purple}Creating secret for S1 image download in K8s...\n${Color_Off}"
+    printf "\n${Purple}Creating image pull secret '${S1_PULL_SECRET_NAME}'...\n${Color_Off}"
     kubectl create secret docker-registry -n ${S1_NAMESPACE} ${S1_PULL_SECRET_NAME} \
         --docker-username="${S1_REPOSITORY_USERNAME}" \
         --docker-server="${REPO_BASE}" \
@@ -277,7 +330,7 @@ helm repo update
 # Create and apply AllowlistSynchronizer for GKE Autopilot
 # https://community.sentinelone.com/s/article/000011984
 if [ "${AUTOPILOT}" = "true" ]; then 
-    printf "\n${Purple}Deploying AllowlistSychronizer for GKE Autopilot...\n${Color_Off}"
+    printf "\n${Purple}Deploying AllowlistSynchronizer for GKE Autopilot...\n${Color_Off}"
     cat << 'EOF' > ${S1_ALLOWLIST}
 apiVersion: auto.gke.io/v1
 kind: AllowlistSynchronizer
@@ -291,6 +344,8 @@ EOF
 fi
 
 # Deploy S1 agent!  Upgrade it if it already exists
+# For the full list of available Helm chart options/values, see:
+#   https://community.sentinelone.com/s/article/000008816 ("Container Agent Helm chart options")
 printf "\n${Purple}Deploying Helm Chart...\n${Color_Off}"
 helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --version ${HELM_RELEASE_VERSION} \
     --set secrets.imagePullSecret=${S1_PULL_SECRET_NAME} \

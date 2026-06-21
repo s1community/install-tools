@@ -1,19 +1,60 @@
-# Example format of 's1.config' file for usage with this script
+##############################################################################################################
+# Example 's1.config' file for s1-k8s-agent-install-repo.sh
+#
+# HOW TO USE:
+#   1. Copy this file to 's1.config' in the directory you run the script from:
+#        cp s1.config.example s1.config
+#   2. Fill in the REQUIRED values below (and adjust the OPTIONAL ones as needed).
+#   3. Run the script with no arguments; it automatically sources 's1.config':
+#        sudo ./s1-k8s-agent-install-repo.sh
+#
+# VALUE PRECEDENCE (highest wins):
+#   1. Positional command-line arguments (only applied when 4 or more are passed)
+#   2. Values set in your 's1.config' file (a value set here overrides an exported env var of the same name)
+#   3. Exported environment variables inherited from the parent shell
+#   4. Built-in defaults (optional vars) / interactive prompts (required vars still empty)
+#
+# NOTE: Your 's1.config' will hold registry credentials and your site token.  Keep it secure and do
+#       NOT commit it to source control (the repo's .gitignore already excludes 's1.config').
+##############################################################################################################
 
-# Create Repo Username/Password:  https://community.sentinelone.com/s/article/000011808
+
+#------------------------------------------------------------------------------------------------------------#
+# REQUIRED
+#------------------------------------------------------------------------------------------------------------#
+
+# Base64 registry username & password used to authenticate to the SentinelOne container registry.
+# Create Repo Username/Password:  https://community.sentinelone.com/s/article/000011517
+#   (see the "Manual deployment for Container Agent" section)
 S1_REPOSITORY_USERNAME=""
 S1_REPOSITORY_PASSWORD=""
 
-# Getting a Site or Group Token: https://community.sentinelone.com/s/article/000004904
+# Base64 Site (or Group) token that associates the agent with your SentinelOne console.
+# Retrieve a Site Token:  https://community.sentinelone.com/s/article/000004904
+#   ("Retrieving a Site or Group Token")
 S1_SITE_TOKEN=""
 
+# Agent version/tag to install, in the format X.Y.Z-(ga|ea), e.g. 26.1.1-ga
+# Find the Latest Agent Version:  https://community.sentinelone.com/s/article/000004966
+#   ("Latest Information" - use the "Image index tag" value for "Container Agent"
+#    in the "Latest Agent GA and SP releases" table)
 S1_AGENT_TAG="26.1.1-ga"
 
-# set to either [ info | debug ]
+
+#------------------------------------------------------------------------------------------------------------#
+# OPTIONAL (defaults shown)
+#------------------------------------------------------------------------------------------------------------#
+
+# Agent log level.  Valid values: trace | debug | info | warning | error | fatal   (default: info)
 S1_AGENT_LOG_LEVEL="info"
 
-# set to either [ true | false ]
-S1_ADMISSION_CONTROLLER="false"
-
-# set to one of [ k8s | openshift | autopilot | fargate | eksauto ]
+# Target Kubernetes platform.  Valid values: k8s | openshift | autopilot | fargate | eksauto   (default: k8s)
+# Supported Kubernetes Types & Resource Sizing:  https://community.sentinelone.com/s/article/000008829
+#   ("Requirements and recommendations for Container Agent")
 K8S_TYPE="k8s"
+
+# Deploy the validating admission controller webhook.  Valid values: true | false   (default: true)
+# NOTE: Enabling this only deploys the webhook.  To actually monitor and/or enforce, you must also
+#       enable an Admission Controller Policy in the SentinelOne management console:
+#       https://community.sentinelone.com/s/article/000011916 ("Configuring Admission Controller policies")
+S1_ADMISSION_CONTROLLER="true"
