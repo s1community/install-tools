@@ -1,1 +1,4 @@
 **/.DS_Store
+
+# Local config files that may contain credentials/tokens (copied from *.example templates)
+**/s1.config
