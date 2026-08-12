@@ -375,6 +375,7 @@ helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --versio
     ${S1_DV_PROXY:+--set configuration.dv_proxy=${S1_DV_PROXY}} \
     ${OPENSHIFT:+--set configuration.platform.type=openshift} \
     ${AUTOPILOT:+--set configuration.platform.gke.autopilot=true} \
+    ${AUTOPILOT:+--set configuration.platform.gke.allowlistVersion='1.1.0'} \
     ${FARGATE:+--set configuration.env.injection.enabled=true --set helper.labels.Application=sentinelone --set configuration.env.agent.pod_uid=0 --set configuration.env.agent.pod_gid=0} \
     ${EKSAUTO:+--set configuration.platform.type=bottlerocket} \
     sentinelone/s1-agent
