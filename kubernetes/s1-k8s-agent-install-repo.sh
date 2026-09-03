@@ -16,7 +16,7 @@
 #   1  S1_REPOSITORY_USERNAME    yes   Base64 registry username (see header link)               -
 #   2  S1_REPOSITORY_PASSWORD    yes   Base64 registry password (see header link)               -
 #   3  S1_SITE_TOKEN             yes   Base64 site token (see header link)                      -
-#   4  S1_AGENT_TAG              yes   X.Y.Z-(ga|ea), e.g. 26.1.3-ga (see header link)          -
+#   4  S1_AGENT_TAG              yes   X.Y.Z-(ga|ea), e.g. 26.2.1-ga (see header link)          -
 #   5  S1_AGENT_LOG_LEVEL        no    trace|debug|info|warning|error|fatal                     info
 #   6  K8S_TYPE                  no    k8s|openshift|autopilot|fargate|eksauto                  k8s
 #   7  S1_ADMISSION_CONTROLLER   no    true|false (enable validating admission controller)      true
@@ -75,7 +75,7 @@ White='\033[0;37m'        # White
 # S1_REPOSITORY_USERNAME=""           # Base64 registry username (required; see header link)
 # S1_REPOSITORY_PASSWORD=""           # Base64 registry password (required; see header link)
 # S1_SITE_TOKEN=""                    # Base64 site token (required; see header link)
-# S1_AGENT_TAG="26.1.3-ga"            # Agent version, X.Y.Z-(ga|ea) (required; see header link)
+# S1_AGENT_TAG="26.2.1-ga"            # Agent version, X.Y.Z-(ga|ea) (required; see header link)
 # S1_AGENT_LOG_LEVEL="info"           # trace|debug|info|warning|error|fatal  (default: info)
 # K8S_TYPE="k8s"                      # k8s|openshift|autopilot|fargate|eksauto  (default: k8s; see header link)
 # S1_ADMISSION_CONTROLLER="true"      # true|false  (default: true)
@@ -133,7 +133,7 @@ fi
 
 if [ -z "$S1_AGENT_TAG" ];then
     echo ""
-    read -rp "Please enter the SentinelOne Agent Version to install (ie: 26.1.3-ga): " S1_AGENT_TAG
+    read -rp "Please enter the SentinelOne Agent Version to install (ie: 26.2.1-ga): " S1_AGENT_TAG
 fi
 
 # If K8S_TYPE is set to openshift, autopilot, fargate, or eksauto, we set special variables that are used to dynamically add helm flags during install
@@ -272,7 +272,7 @@ fi
 
 # Check if the value of S1_AGENT_TAG is in the right format
 if ! echo "$S1_AGENT_TAG" | grep -E '^[0-9]{2}\.[0-9]\.[0-9]+-(ga|ea)$' &> /dev/null ; then
-    printf "\n${Red}ERROR:  The value provided for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 26.1.3-ga, 25.4.2-ga,25.3.2-ga \n${Color_Off}"
+    printf "\n${Red}ERROR:  The value provided for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 26.2.1-ga, 25.4.2-ga,25.3.2-ga \n${Color_Off}"
     printf "\nFor the ${Purple}latest available Agent versions${Color_Off}, please see the following KB article:\n"
     printf "    ${Blue}https://community.sentinelone.com/s/article/000004966 ${Color_Off} \n"
     printf "    ${Cyan}(\"Latest Information\" - \"Image index tag\" for \"Container Agent\" in the \"Latest Agent GA and SP releases\" table)${Color_Off} \n\n"

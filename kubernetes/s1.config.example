@@ -34,11 +34,11 @@ S1_REPOSITORY_PASSWORD=""
 #   ("Retrieving a Site or Group Token")
 S1_SITE_TOKEN=""
 
-# Agent version/tag to install, in the format X.Y.Z-(ga|ea), e.g. 26.1.3-ga
+# Agent version/tag to install, in the format X.Y.Z-(ga|ea), e.g. 26.2.1-ga
 # Find the Latest Agent Version:  https://community.sentinelone.com/s/article/000004966
 #   ("Latest Information" - use the "Image index tag" value for "Container Agent"
 #    in the "Latest Agent GA and SP releases" table)
-S1_AGENT_TAG="26.1.3-ga"
+S1_AGENT_TAG="26.2.1-ga"
 
 
 #------------------------------------------------------------------------------------------------------------#
