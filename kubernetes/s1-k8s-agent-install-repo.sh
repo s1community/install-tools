@@ -272,7 +272,7 @@ fi
 
 # Check if the value of S1_AGENT_TAG is in the right format
 if ! echo "$S1_AGENT_TAG" | grep -E '^[0-9]{2}\.[0-9]\.[0-9]+-(ga|ea)$' &> /dev/null ; then
-    printf "\n${Red}ERROR:  The value provided for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 26.2.1-ga, 25.4.2-ga,25.3.2-ga \n${Color_Off}"
+    printf "\n${Red}ERROR:  The value provided for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 26.2.1-ga, 25.1.3-ga, 25.4.2-ga\n${Color_Off}"
     printf "\nFor the ${Purple}latest available Agent versions${Color_Off}, please see the following KB article:\n"
     printf "    ${Blue}https://community.sentinelone.com/s/article/000004966 ${Color_Off} \n"
     printf "    ${Cyan}(\"Latest Information\" - \"Image index tag\" for \"Container Agent\" in the \"Latest Agent GA and SP releases\" table)${Color_Off} \n\n"
