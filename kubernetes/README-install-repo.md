@@ -46,7 +46,7 @@ chmod +x s1-k8s-agent-install-repo.sh
 | 1 | S1_REPOSITORY_USERNAME | SentinelOne container registry username | Yes | - |
 | 2 | S1_REPOSITORY_PASSWORD | SentinelOne container registry password | Yes | - |
 | 3 | S1_SITE_TOKEN | Your SentinelOne Site or Group token | Yes | - |
-| 4 | S1_AGENT_TAG | Agent version/tag, format `X.Y.Z-(ga\|ea)`, e.g. `26.1.3-ga` | Yes | - |
+| 4 | S1_AGENT_TAG | Agent version/tag, format `X.Y.Z-(ga\|ea)`, e.g. `26.2.1-ga` | Yes | - |
 | 5 | S1_AGENT_LOG_LEVEL | `trace` \| `debug` \| `info` \| `warning` \| `error` \| `fatal` | No | `info` |
 | 6 | K8S_TYPE | `k8s` \| `openshift` \| `autopilot` \| `fargate` \| `eksauto` | No | `k8s` |
 | 7 | S1_ADMISSION_CONTROLLER | `true` \| `false` — deploy the validating admission controller webhook | No | `true` |
