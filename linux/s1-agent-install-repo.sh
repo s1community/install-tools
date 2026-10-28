@@ -124,7 +124,7 @@ function check_args () {
 
     # Check if the value of S1_AGENT_VERSION is in the right format
     if ! echo $S1_AGENT_VERSION | grep -E '^[0-9]{2}\.[0-9]\.[0-9]\.[0-9]+$' &> /dev/null ; then
-        printf "\n${Red}ERROR:  The value passed for S1_AGENT_VERSION is not in the correct format.  Examples of valid values are:  23.3.2.12 and 23.4.1.4 \n\n${Color_Off}"
+        printf "\n${Red}ERROR:  The value passed for S1_AGENT_VERSION is not in the correct format.  Examples of valid values are: 26.2.1, 26.1.3, 25.4.3 \n\n${Color_Off}"
         exit 1
     fi
 
