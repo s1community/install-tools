@@ -138,8 +138,8 @@ if ! [ ${#S1_REPOSITORY_PASSWORD} -gt 160 ]; then
 fi
 
 # Check if the value of S1_AGENT_TAG is in the right format
-if ! echo $S1_AGENT_TAG | grep -E '^[[:digit:]][[:digit:]]\.[[:digit:]]\.[[:digit:]]-[ge]a$' &> /dev/null ; then
-    printf "\n${Red}ERROR:  The value passed for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 26.2.2-ga, 26.1.4-ga, 25.4.3-ga \n\n${Color_Off}"
+if ! echo $S1_AGENT_TAG | grep -E '^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+-(ga|ea|beta)$' &> /dev/null ; then
+    printf "\n${Red}ERROR:  The value passed for S1_AGENT_TAG is not in the correct format.  Examples of valid values are: 26.2.2-ga, 26.1.4-ga, 25.4.3-ga, 26.4.1-beta \n\n${Color_Off}"
     exit 1
 fi
 
