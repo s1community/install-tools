@@ -6,7 +6,7 @@
 #
 # Notes: This script will install the curl utility on ubuntu / debian systems if not already installed.
 #
-# Version:  2026.06.19
+# Version:  2026.11.16
 ##############################################################################################################
 
 
@@ -30,7 +30,7 @@ White='\033[0;37m'        # White
 # S1_REPOSITORY_USERNAME=""
 # S1_REPOSITORY_PASSWORD=""
 # S1_SITE_TOKEN=""
-# S1_AGENT_VERSION="25.3.2"
+# S1_AGENT_VERSION="26.3.1.10"
 # INCLUDE_EARLY_ACCESS_REPO="true"
 
 
@@ -124,7 +124,7 @@ function check_args () {
 
     # Check if the value of S1_AGENT_VERSION is in the right format
     if ! echo $S1_AGENT_VERSION | grep -E '^[0-9]{2}\.[0-9]\.[0-9]\.[0-9]+$' &> /dev/null ; then
-        printf "\n${Red}ERROR:  The value passed for S1_AGENT_VERSION is not in the correct format.  Examples of valid values are: 26.2.1, 26.1.3, 25.4.3 \n\n${Color_Off}"
+        printf "\n${Red}ERROR:  The value passed for S1_AGENT_VERSION is not in the correct format.  Examples of valid values are: 26.3.1, 26.2.2, 26.1.3, 25.4.3 \n\n${Color_Off}"
         exit 1
     fi
 
