@@ -386,6 +386,6 @@ helm upgrade --install ${HELM_RELEASE_NAME} --namespace=${S1_NAMESPACE} --versio
 ################################################################################
 
 # Check the status of the pods
-printf "\n${Purple}Running: kubectl wait --for=condition=ready --timeout=60s pod -n $S1_NAMESPACE -l app=s1-agent\n${Color_Off}"
-printf "\n${Purple}This should take less than 60 seconds in most cases...\n${Color_Off}"
-kubectl wait --for=condition=ready --timeout=60s pod -n $S1_NAMESPACE -l app=s1-agent
+printf "\n${Purple}Running: kubectl wait --for=condition=ready --timeout=90s pod -n $S1_NAMESPACE -l app=s1-agent\n${Color_Off}"
+printf "\n${Purple}This should take less than 90 seconds in most cases...\n${Color_Off}"
+kubectl wait --for=condition=ready --timeout=90s pod -n $S1_NAMESPACE -l app=s1-agent
